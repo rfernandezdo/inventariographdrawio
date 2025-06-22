@@ -12,63 +12,67 @@ OUTPUT_FILENAME = "azure_full_hierarchy_with_icons.drawio"
 
 # --- ICONOS Y ESTILOS DE AZURE PARA DRAW.IO ---
 # Mapeo de tipos de recursos de Azure a sus iconos en la librería de Draw.io
-AZURE_ICONS = {    
-    "microsoft.management/managementgroups": "img/lib/azure2/general/Management_Group.svg",
-    "microsoft.resources/subscriptions": "img/lib/azure2/general/Subscriptions.svg",
-    "microsoft.resources/subscriptions/resourcegroups": "img/lib/azure2/general/Resource_Groups.svg",
-    "microsoft.resources/deploymentscripts": "img/lib/azure2/general/Deployment_Script.svg",
-    "microsoft.resources/resources": "img/lib/azure2/general/Resource.svg",
+AZURE_ICONS = {
+    "microsoft.alertsmanagement/smartdetectoralertrules": "img/lib/azure2/management_governance/Alerts.svg",
+    "microsoft.apimanagement/service": "img/lib/azure2/app_services/API_Management.svg",
+    "microsoft.automation/automationaccounts": "img/lib/azure2/management_governance/Automation_Accounts.svg",
+    "microsoft.cognitiveservices/accounts": "img/lib/azure2/ai_machine_learning/Cognitive_Services.svg",
     "microsoft.compute/availabilitysets": "img/lib/azure2/compute/Availability_Set.svg",
     "microsoft.compute/restorepointcollections": "img/lib/azure2/compute/Restore_Points_Collections.svg",
-    "microsoft.compute/virtualmachinescalesets": "img/lib/azure2/compute/Virtual_Machine_Scale_Set.svg",
-    "microsoft.compute/virtualmachines/extensions": "img/lib/azure2/compute/Virtual_Machine_Extension.svg",    
     "microsoft.compute/virtualmachines": "img/lib/azure2/compute/Virtual_Machine.svg",
-    "microsoft.network/virtualnetworks": "img/lib/azure2/networking/Virtual_Networks.svg",
-    "microsoft.network/networkinterfaces": "img/lib/azure2/networking/Network_Interfaces.svg",
-    "microsoft.network/publicipaddresses": "img/lib/azure2/networking/Public_IP_Address.svg",
-    "microsoft.network/loadbalancers": "img/lib/azure2/networking/Load_Balancer.svg",
+    "microsoft.compute/virtualmachines/extensions": "img/lib/azure2/compute/Virtual_Machine_Extension.svg",
+    "microsoft.compute/virtualmachinescalesets": "img/lib/azure2/compute/Virtual_Machine_Scale_Set.svg",
+    "microsoft.containerregistry/registries": "img/lib/azure2/containers/Container_Registry.svg",
+    "microsoft.containerservice/managedclusters": "img/lib/azure2/containers/Kubernetes_Service.svg",
+    "microsoft.eventgrid/domains": "img/lib/azure2/messaging/Event_Grid_Domains.svg",
+    "microsoft.eventgrid/eventsubscriptions": "img/lib/azure2/messaging/Event_Subscriptions.svg",
+    "microsoft.eventgrid/topics": "img/lib/azure2/messaging/Event_Grid_Topics.svg",
+    "microsoft.insights/actiongroups": "https://raw.githubusercontent.com/maskati/azure-icons/4b66132ac79eaaed25bf419db6e22c0fe3ca34b1/svg/Microsoft_Azure_Monitoring_Alerts/ActionGroup.svg",
+    "microsoft.insights/components": "img/lib/azure2/management_governance/Application_Insights.svg",
+    "microsoft.keyvault/vaults": "img/lib/azure2/security/Key_Vaults.svg",
+    "microsoft.logic/workflows": "img/lib/azure2/app_services/Logic_App.svg",
+    "microsoft.management/managementgroups": "img/lib/azure2/general/Management_Group.svg",
+    "microsoft.managedidentity/userassignedidentities": "img/lib/mscae/Managed_Identities.svg",
+    "microsoft.machinelearningservices/workspaces": "img/lib/azure2/ai_machine_learning/Machine_Learning.svg",
     "microsoft.network/applicationgateways": "img/lib/azure2/networking/Application_Gateway.svg",
-    "microsoft.network/trafficmanagerprofiles": "img/lib/azure2/networking/Traffic_Manager_Profile.svg",
-    "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuit.svg",
-    "microsoft.network/networkwatchers": "img/lib/azure2/networking/Network_Watcher.svg",
-    "microsoft.network/virtualnetworks/subnets": "img/lib/azure2/networking/Subnet.svg",
-    "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connection.svg",
-    "microsoft.network/routetables": "img/lib/azure2/networking/Route_Tables.svg",
-    "microsoft.network/virtualnetworkgateways": "img/lib/azure2/networking/Virtual_Network_Gateway.svg",
     "microsoft.network/azurefirewalls": "img/lib/azure2/networking/Azure_Firewall.svg",
     "microsoft.network/azurefirewallpolicies": "img/lib/azure2/networking/Azure_Firewall_Policy.svg",
     "microsoft.network/dnszones": "img/lib/azure2/networking/DNS_Zone.svg",
     "microsoft.network/dnszones/recordsets": "img/lib/azure2/networking/DNS_Record_Set.svg",
+    "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuit.svg",
+    "microsoft.network/loadbalancers": "img/lib/azure2/networking/Load_Balancer.svg",
+    "microsoft.network/networkinterfaces": "img/lib/azure2/networking/Network_Interfaces.svg",
+    "microsoft.network/networksecuritygroups": "img/lib/azure2/networking/Network_Security_Groups.svg",
+    "microsoft.network/networkwatchers": "img/lib/azure2/networking/Network_Watcher.svg",
+    "microsoft.network/privateendpoints": "img/lib/azure2/other/Private_Endpoints.svg",
+    "microsoft.network/publicipaddresses": "img/lib/azure2/networking/Public_IP_Address.svg",
+    "microsoft.network/routetables": "img/lib/azure2/networking/Route_Tables.svg",
+    "microsoft.network/trafficmanagerprofiles": "img/lib/azure2/networking/Traffic_Manager_Profile.svg",
+    "microsoft.network/virtualnetworks": "img/lib/azure2/networking/Virtual_Networks.svg",
+    "microsoft.network/virtualnetworks/subnets": "img/lib/azure2/networking/Subnet.svg",
+    "microsoft.network/virtualnetworkgateways": "img/lib/azure2/networking/Virtual_Network_Gateway.svg",
+    "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connection.svg",
+    "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
+    "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
+    "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",
+    "microsoft.resources/deploymentscripts": "img/lib/azure2/general/Deployment_Script.svg",
+    "microsoft.resources/resources": "img/lib/azure2/general/Resource.svg",
+    "microsoft.resources/subscriptions": "img/lib/azure2/general/Subscriptions.svg",
+    "microsoft.resources/subscriptions/resourcegroups": "img/lib/azure2/general/Resource_Groups.svg",
+    "microsoft.search/searchservices": "img/lib/azure2/ai_machine_learning/Search.svg",
+    "microsoft.security/automations": "image=img/lib/azure2/management_governance/Automation_Accounts.svg",
+    "microsoft.servicebus/namespaces": "img/lib/azure2/messaging/Service_Bus.svg",
+    "microsoft.sql/servers": "img/lib/azure2/databases/SQL_Server.svg",
+    "microsoft.sql/servers/databases": "img/lib/azure2/databases/SQL_Database.svg",
+    "microsoft.storage/storageaccounts": "img/lib/azure2/storage/Storage_Accounts.svg",
     "microsoft.storage/storageaccounts/blobservices": "img/lib/azure2/storage/Blob_Service.svg",
+    "microsoft.storage/storageaccounts/blobservices/containers": "img/lib/azure2/storage/Blob_Container.svg",
     "microsoft.storage/storageaccounts/fileservices": "img/lib/azure2/storage/File_Service.svg",
+    "microsoft.storage/storageaccounts/fileservices/shares": "img/lib/azure2/storage/File_Share.svg",
     "microsoft.storage/storageaccounts/queueservices": "img/lib/azure2/storage/Queue_Service.svg",
     "microsoft.storage/storageaccounts/tableservices": "img/lib/azure2/storage/Table_Service.svg",
-    "microsoft.storage/storageaccounts/blobservices/containers": "img/lib/azure2/storage/Blob_Container.svg",
-    "microsoft.storage/storageaccounts/fileservices/shares": "img/lib/azure2/storage/File_Share.svg",
-    "microsoft.storage/storageaccounts": "img/lib/azure2/storage/Storage_Account_Classic.svg",
-    "microsoft.web/serverfarms": "img/lib/azure2/app_services/App_Service_Plan.svg",
-    "microsoft.web/sites": "img/lib/azure2/app_services/App_Service.svg",
-    "microsoft.sql/servers/databases": "img/lib/azure2/databases/SQL_Database.svg",
-    "microsoft.sql/servers": "img/lib/azure2/databases/SQL_Server.svg",
-    "microsoft.keyvault/vaults": "img/lib/azure2/security/Key_Vault.svg",
-    "microsoft.insights/components": "img/lib/azure2/management_governance/Application_Insights.svg",
-    "microsoft.automation/automationaccounts": "img/lib/azure2/management_governance/Automation_Accounts.svg",
-    "microsoft.logic/workflows": "img/lib/azure2/app_services/Logic_App.svg",
-    "microsoft.managedidentity/userassignedidentities": "img/lib/azure2/identity/Managed_Identities.svg",
-    "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
-    "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
-    "microsoft.network/networksecuritygroups": "img/lib/azure2/networking/Network_Security_Groups.svg",
-    "microsoft.containerregistry/registries": "img/lib/azure2/containers/Container_Registry.svg",
-    "microsoft.containerservice/managedclusters": "img/lib/azure2/containers/Kubernetes_Service.svg",
-    "microsoft.servicebus/namespaces": "img/lib/azure2/messaging/Service_Bus.svg",
-    "microsoft.eventgrid/topics": "img/lib/azure2/messaging/Event_Grid_Topics.svg",
-    "microsoft.eventgrid/domains": "img/lib/azure2/messaging/Event_Grid_Domains.svg",
-    "microsoft.eventgrid/eventsubscriptions": "img/lib/azure2/messaging/Event_Subscriptions.svg",
-    "microsoft.cognitiveservices/accounts": "img/lib/azure2/ai_machine_learning/Cognitive_Services.svg",
-    "microsoft.machinelearningservices/workspaces": "img/lib/azure2/ai_machine_learning/Machine_Learning.svg",
-    "microsoft.apimanagement/service": "img/lib/azure2/app_services/API_Management.svg",
-    "microsoft.search/searchservices": "img/lib/azure2/ai_machine_learning/Search.svg",
-    "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",
+    "microsoft.web/serverfarms": "img/lib/azure2/app_services/App_Service_Plans.svg",
+    "microsoft.web/sites": "img/lib/azure2/compute/App_Services.svg"
 }
 
 
@@ -105,20 +109,32 @@ def pretty_print_xml(elem):
     reparsed = minidom.parseString(rough_string)
     return reparsed.toprettyxml(indent="  ")
 
+def run_az_graph_query_with_pagination(query):
+    """Ejecuta una consulta de az graph con paginación para obtener >1000 objetos."""
+    all_results = []
+    skip_token = None
+    while True:
+        cmd = ["az", "graph", "query", "-q", query, "--first", "1000", "--output", "json"]
+        if skip_token:
+            cmd += ["--skip-token", skip_token]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        data = json.loads(result.stdout)
+        all_results.extend(data.get('data', []))
+        skip_token = data.get('skipToken')
+        if not skip_token:
+            break
+    return all_results
+
 def get_azure_resources():
-    """Obtiene la jerarquía completa de Azure usando una consulta de graph fiable y añade subnets como nodos hijos de los vnets."""
-    print("INFO: Obteniendo la jerarquía completa de Azure con una consulta corregida...")
+    """Obtiene la jerarquía completa de Azure usando paginación para más de 1000 objetos (management groups incluidos)."""
+    print("INFO: Obteniendo la jerarquía completa de Azure con paginación...")
     if not os.system("az version > " + ("nul" if os.name == 'nt' else "/dev/null 2>&1")) == 0:
         print("\nERROR: Azure CLI no está instalado o no está en el PATH.")
         sys.exit(1)
-
     try:
         query = "resourcecontainers | union resources"
-        command = ["az", "graph", "query", "-q", query, "--output", "json"]
-        result = subprocess.run(command, capture_output=True, text=True, check=True, encoding='utf-8')
-        resources = json.loads(result.stdout)
-        items = resources['data']
-        print(f"INFO: Se han encontrado {len(items)} elementos.")
+        items = run_az_graph_query_with_pagination(query)
+        print(f"INFO: Se han encontrado {len(items)} elementos (incluyendo management groups si existen permisos).")
 
         # --- Extraer subnets de cada VNet y agregarlas como recursos independientes ---
         extra_subnets = []
@@ -149,11 +165,17 @@ def get_azure_resources():
         sys.exit(1)
 
 def find_dependencies(all_items):
-    """Analiza los elementos para encontrar dependencias jerárquicas y de propiedades, vinculando correctamente recursos a subnets si corresponde."""
+    """Analiza los elementos para encontrar dependencias jerárquicas y de propiedades, incluyendo la jerarquía completa de management groups."""
     print("INFO: Analizando dependencias...")
     dependencies = set()
     item_map = {item['id'].lower(): item for item in all_items}
     all_item_ids = set(item_map.keys())
+
+    # --- Construir set de IDs de managed identities ---
+    managed_identity_ids = set(
+        item['id'].lower() for item in all_items
+        if item.get('type', '').lower() == 'microsoft.managedidentity/userassignedidentities'
+    )
 
     for item in all_items:
         source_id_lower = item['id'].lower()
@@ -161,11 +183,32 @@ def find_dependencies(all_items):
 
         parent_id = None
         if item_type_lower == 'microsoft.management/managementgroups':
-            try: parent_id = item['properties']['details']['parent']['id'].lower()
-            except (KeyError, TypeError, AttributeError): parent_id = None
+            # Añadir dependencia a cada ancestro de management group
+            mg_ancestors = item.get('properties', {}).get('details', {}).get('managementGroupAncestorsChain', [])
+            if isinstance(mg_ancestors, list) and len(mg_ancestors) > 0:
+                # El primer ancestro es el padre directo
+                parent_id = mg_ancestors[0].get('id', '').lower()
+            else:
+                try:
+                    parent_id = item['properties']['details']['parent']['id'].lower()
+                except (KeyError, TypeError, AttributeError):
+                    parent_id = None
         elif item_type_lower == 'microsoft.resources/subscriptions':
-            try: parent_id = item['properties']['managementGroup']['id'].lower()
-            except (KeyError, TypeError): parent_id = None
+            mg_id = None
+            try:
+                mg_chain = item.get('properties', {}).get('managementGroupAncestorsChain')
+                if isinstance(mg_chain, list) and len(mg_chain) > 0:
+                    mg_id = mg_chain[0].get('id')
+            except Exception:
+                mg_id = None
+            if mg_id and isinstance(mg_id, str):
+                mg_id = mg_id.lower()
+                if mg_id in all_item_ids:
+                    parent_id = mg_id
+                else:
+                    parent_id = None
+            else:
+                parent_id = None
         elif item_type_lower == 'microsoft.resources/subscriptions/resourcegroups':
             parent_id = f"/subscriptions/{item['subscriptionId']}".lower()
         elif 'resourceGroup' in item and 'subscriptionId' in item:
@@ -186,6 +229,12 @@ def find_dependencies(all_items):
                         if subnet_id in all_item_ids and subnet_id != source_id_lower:
                             dependencies.add((source_id_lower, subnet_id))
                             continue  # No seguir escaneando este valor, ya se vinculó a la subnet
+                    # --- Dependencia a managed identity (mejorada: busca en cualquier nivel) ---
+                    if k.lower() == 'userassignedidentities' and isinstance(value, dict):
+                        for mi_id in value.keys():
+                            mi_id_lower = mi_id.lower()
+                            if mi_id_lower in managed_identity_ids and mi_id_lower != source_id_lower:
+                                dependencies.add((source_id_lower, mi_id_lower))
                     scan_properties(value)
             elif isinstance(props, list):
                 for element in props: scan_properties(element)
@@ -195,7 +244,7 @@ def find_dependencies(all_items):
                     dependencies.add((source_id_lower, props.lower()))
                 elif props.lower() in all_item_ids and props.lower() != source_id_lower:
                     dependencies.add((source_id_lower, props.lower()))
-        scan_properties(item.get('properties', {}))
+        scan_properties(item)
 
     print(f"INFO: Se han encontrado {len(dependencies)} relaciones de dependencia.")
     return list(dependencies)
