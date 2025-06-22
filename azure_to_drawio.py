@@ -13,11 +13,13 @@ OUTPUT_FILENAME = "azure_full_hierarchy_with_icons.drawio"
 # --- ICONOS Y ESTILOS DE AZURE PARA DRAW.IO ---
 # Mapeo de tipos de recursos de Azure a sus iconos en la librería de Draw.io
 AZURE_ICONS = {
+    "microsoft.aad/domainservices": "img/lib/azure2/identity/Entra_Domain_Services.svg",
     "microsoft.alertsmanagement/smartdetectoralertrules": "img/lib/azure2/management_governance/Alerts.svg",
     "microsoft.apimanagement/service": "img/lib/azure2/app_services/API_Management.svg",
     "microsoft.automation/automationaccounts": "img/lib/azure2/management_governance/Automation_Accounts.svg",
     "microsoft.cognitiveservices/accounts": "img/lib/azure2/ai_machine_learning/Cognitive_Services.svg",
     "microsoft.compute/availabilitysets": "img/lib/azure2/compute/Availability_Set.svg",
+    "microsoft.compute/disks": "img/lib/azure2/compute/Disks.svg",
     "microsoft.compute/restorepointcollections": "img/lib/azure2/compute/Restore_Points_Collections.svg",
     "microsoft.compute/virtualmachines": "img/lib/azure2/compute/Virtual_Machine.svg",
     "microsoft.compute/virtualmachines/extensions": "img/lib/azure2/compute/Virtual_Machine_Extension.svg",
@@ -31,32 +33,33 @@ AZURE_ICONS = {
     "microsoft.insights/components": "img/lib/azure2/management_governance/Application_Insights.svg",
     "microsoft.keyvault/vaults": "img/lib/azure2/security/Key_Vaults.svg",
     "microsoft.logic/workflows": "img/lib/azure2/app_services/Logic_App.svg",
-    "microsoft.management/managementgroups": "img/lib/azure2/general/Management_Group.svg",
+    "microsoft.management/managementgroups": "img/lib/azure2/general/Management_Groups.svg",
     "microsoft.managedidentity/userassignedidentities": "img/lib/mscae/Managed_Identities.svg",
     "microsoft.machinelearningservices/workspaces": "img/lib/azure2/ai_machine_learning/Machine_Learning.svg",
     "microsoft.network/applicationgateways": "img/lib/azure2/networking/Application_Gateway.svg",
+    "microsoft.network/connections": "img/lib/azure2/networking/Connections.svg",
     "microsoft.network/azurefirewalls": "img/lib/azure2/networking/Azure_Firewall.svg",
     "microsoft.network/azurefirewallpolicies": "img/lib/azure2/networking/Azure_Firewall_Policy.svg",
     "microsoft.network/dnszones": "img/lib/azure2/networking/DNS_Zone.svg",
-    "microsoft.network/dnszones/recordsets": "img/lib/azure2/networking/DNS_Record_Set.svg",
-    "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuit.svg",
-    "microsoft.network/loadbalancers": "img/lib/azure2/networking/Load_Balancer.svg",
+    "microsoft.network/dnszones/recordsets": "img/lib/azure2/networking/DNS_Record_Sets.svg",
+    "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuits.svg",
+    "microsoft.network/loadbalancers": "img/lib/azure2/networking/Load_Balancers.svg",
     "microsoft.network/networkinterfaces": "img/lib/azure2/networking/Network_Interfaces.svg",
     "microsoft.network/networksecuritygroups": "img/lib/azure2/networking/Network_Security_Groups.svg",
     "microsoft.network/networkwatchers": "img/lib/azure2/networking/Network_Watcher.svg",
     "microsoft.network/privateendpoints": "img/lib/azure2/other/Private_Endpoints.svg",
-    "microsoft.network/publicipaddresses": "img/lib/azure2/networking/Public_IP_Address.svg",
+    "microsoft.network/publicipaddresses": "img/lib/azure2/networking/Public_IP_Addresses.svg",
     "microsoft.network/routetables": "img/lib/azure2/networking/Route_Tables.svg",
     "microsoft.network/trafficmanagerprofiles": "img/lib/azure2/networking/Traffic_Manager_Profile.svg",
     "microsoft.network/virtualnetworks": "img/lib/azure2/networking/Virtual_Networks.svg",
     "microsoft.network/virtualnetworks/subnets": "img/lib/azure2/networking/Subnet.svg",
-    "microsoft.network/virtualnetworkgateways": "img/lib/azure2/networking/Virtual_Network_Gateway.svg",
-    "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connection.svg",
+    "microsoft.network/virtualnetworkgateways": "img/lib/azure2/networking/Virtual_Network_Gateways.svg",
+    "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connections.svg",
     "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
     "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
     "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",
-    "microsoft.resources/deploymentscripts": "img/lib/azure2/general/Deployment_Script.svg",
-    "microsoft.resources/resources": "img/lib/azure2/general/Resource.svg",
+    "microsoft.resources/deploymentscripts": "img/lib/azure2/general/Deployment_Scripts.svg",
+    "microsoft.resources/resources": "img/lib/azure2/general/Resources.svg",
     "microsoft.resources/subscriptions": "img/lib/azure2/general/Subscriptions.svg",
     "microsoft.resources/subscriptions/resourcegroups": "img/lib/azure2/general/Resource_Groups.svg",
     "microsoft.search/searchservices": "img/lib/azure2/ai_machine_learning/Search.svg",
@@ -125,27 +128,127 @@ def run_az_graph_query_with_pagination(query):
             break
     return all_results
 
+def get_azure_management_groups_with_powershell():
+    """Obtiene los management groups usando PowerShell y Search-AzGraph, devolviendo una lista de objetos."""
+    import platform
+    if platform.system() != "Windows":
+        print("ADVERTENCIA: La obtención de management groups vía PowerShell solo está soportada en Windows con Az PowerShell instalado.")
+        return []
+    try:
+        cmd = [
+            "powershell", "-Command",
+            "Search-AzGraph -Query \"ResourceContainers | where type =~ 'microsoft.management/managementgroups'\" | ConvertTo-Json -Depth 10"
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        # Puede devolver un array o un objeto, intentar parsear
+        data = json.loads(result.stdout)
+        if isinstance(data, dict) and 'id' in data:
+            return [data]
+        elif isinstance(data, list):
+            return data
+        else:
+            return []
+    except Exception as e:
+        print(f"ADVERTENCIA: No se pudieron obtener management groups vía PowerShell: {e}")
+        return []
+
+def get_azure_management_groups():
+    """Obtiene los management groups usando Azure REST API (Linux) o PowerShell (Windows), normalizando el formato para dependencias."""
+    import platform
+    if platform.system() == "Windows":
+        return get_azure_management_groups_with_powershell()
+    else:
+        try:
+            import requests
+            token_cmd = ["az", "account", "get-access-token", "--resource", "https://management.azure.com/", "--output", "json"]
+            token_result = subprocess.run(token_cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+            token = json.loads(token_result.stdout)["accessToken"]
+            url = "https://management.azure.com/providers/Microsoft.Management/managementGroups?api-version=2021-04-01&$expand=parent"
+            headers = {"Authorization": f"Bearer {token}"}
+            mg_list = []
+            next_link = url
+            while next_link:
+                resp = requests.get(next_link, headers=headers)
+                if resp.status_code != 200:
+                    print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {resp.status_code} {resp.text}")
+                    break
+                data = resp.json()
+                for mg in data.get("value", []):
+                    # Normalizar formato para dependencias
+                    mg_obj = {
+                        'id': mg.get('id'),
+                        'type': mg.get('type', 'microsoft.management/managementgroups'),
+                        'name': mg.get('name'),
+                        'displayName': mg.get('properties', {}).get('displayName'),
+                        'properties': mg.get('properties', {}),
+                        # El padre está en properties.parent.id si existe
+                        'parent': mg.get('properties', {}).get('parent', {}).get('id')
+                    }
+                    mg_list.append(mg_obj)
+                next_link = data.get("nextLink")
+            print(f"INFO: Se han encontrado {len(mg_list)} management groups (REST API).")
+            return mg_list
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {e}")
+            return []
+
+def enrich_management_groups_with_ancestors(mg_list):
+    """Para cada management group, obtiene todos sus datos completos y su managementGroupAncestorsChain usando az graph query y los fusiona en el objeto."""
+    for i, mg in enumerate(mg_list):
+        mg_name = mg.get('name')
+        if not mg_name:
+            continue
+        try:
+            # Query recomendada: obtiene todos los datos del management group
+            query = ("ResourceContainers | where type =~ 'microsoft.management/managementgroups' "
+                     f"| where name == '{mg_name}'")
+            cmd = [
+                "az", "graph", "query", "-q", query, "--management-groups", mg_name, "--output", "json"
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+            data = json.loads(result.stdout)
+            if data.get('data'):
+                mg_full = data['data'][0]  # Solo debe haber uno
+                # Fusionar los datos completos en el objeto original
+                for k, v in mg_full.items():
+                    if k == 'properties' and isinstance(v, dict):
+                        # Fusionar propiedades
+                        mg.setdefault('properties', {})
+                        for pk, pv in v.items():
+                            mg['properties'][pk] = pv
+                    else:
+                        mg[k] = v
+                # Asegurar que la cadena de ancestros esté presente
+                ancestors = mg.get('properties', {}).get('details', {}).get('managementGroupAncestorsChain')
+                if not ancestors:
+                    # Intentar extraerla si está en el objeto completo
+                    ancestors = mg_full.get('properties', {}).get('details', {}).get('managementGroupAncestorsChain')
+                    if ancestors:
+                        mg.setdefault('properties', {}).setdefault('details', {})['managementGroupAncestorsChain'] = ancestors
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo enriquecer el management group {mg_name} con datos completos: {e}")
+    return mg_list
+
 def get_azure_resources():
-    """Obtiene la jerarquía completa de Azure usando paginación para más de 1000 objetos (management groups incluidos)."""
-    print("INFO: Obteniendo la jerarquía completa de Azure con paginación...")
+    """Obtiene la jerarquía completa de Azure usando REST API o PowerShell para management groups y az graph para el resto."""
+    print("INFO: Obteniendo management groups (REST API o PowerShell) y recursos con az graph query...")
     if not os.system("az version > " + ("nul" if os.name == 'nt' else "/dev/null 2>&1")) == 0:
         print("\nERROR: Azure CLI no está instalado o no está en el PATH.")
         sys.exit(1)
+    mg_items = get_azure_management_groups()
+    mg_items = enrich_management_groups_with_ancestors(mg_items)
     try:
-        query = "resourcecontainers | union resources"
-        items = run_az_graph_query_with_pagination(query)
-        print(f"INFO: Se han encontrado {len(items)} elementos (incluyendo management groups si existen permisos).")
-
-        # --- Extraer subnets de cada VNet y agregarlas como recursos independientes ---
+        rest_query = "resourcecontainers | where type != 'microsoft.management/managementgroups' | union resources"
+        rest_items = run_az_graph_query_with_pagination(rest_query)
+        print(f"INFO: Se han encontrado {len(rest_items)} recursos y resource containers (sin management groups).")
         extra_subnets = []
-        for vnet in items:
+        for vnet in rest_items:
             if vnet.get('type', '').lower() == 'microsoft.network/virtualnetworks':
                 vnet_id = vnet['id']
                 subnets = vnet.get('properties', {}).get('subnets', [])
                 for subnet in subnets:
                     subnet_id = subnet.get('id')
                     if not subnet_id:
-                        # Construir el id si no está
                         subnet_id = vnet_id + "/subnets/" + subnet.get('name', 'unknown')
                     subnet_item = {
                         'id': subnet_id,
@@ -157,8 +260,9 @@ def get_azure_resources():
                     extra_subnets.append(subnet_item)
         if extra_subnets:
             print(f"INFO: Se han añadido {len(extra_subnets)} subnets como nodos independientes.")
-        items.extend(extra_subnets)
-        return items
+        all_items = mg_items + rest_items + extra_subnets
+        print(f"INFO: Total de elementos combinados: {len(all_items)}")
+        return all_items
     except Exception as e:
         print(f"\nERROR al ejecutar 'az graph query': {e}")
         print("Asegúrate de haber iniciado sesión ('az login') y tener los permisos necesarios.")
@@ -251,8 +355,8 @@ def find_dependencies(all_items):
 
 
 def generate_drawio_file(items, dependencies, embed_data=True):
-    """Genera el archivo .drawio XML con datos incrustados como <object>."""
-    print("INFO: Generando el archivo .drawio con iconos y metadatos...")
+    """Genera el archivo .drawio XML con datos incrustados como <object>. Si embed_data=False, solo incluye 'type' y 'name'."""
+    print("INFO: Generando el archivo .drawio con iconos y metadatos..." if embed_data else "INFO: Generando el archivo .drawio sin datos embebidos...")
     mxfile = ET.Element("mxfile", host="app.diagrams.net", agent="python-script")
     diagram = ET.SubElement(mxfile, "diagram", id="main-diagram", name="Azure Infrastructure")
     mxGraphModel = ET.SubElement(diagram, "mxGraphModel", dx="2000", dy="1200", grid="1", gridSize="10", guides="1", tooltips="1", connect="1", arrows="1", fold="1", page="1", pageScale="1", pageWidth="2339", pageHeight="1654")

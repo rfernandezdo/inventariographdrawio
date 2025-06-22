@@ -18,6 +18,7 @@ Este script genera un archivo `.drawio` con la jerarquía completa de recursos d
 - Python 3.x
 - Azure CLI (`az`) y extensión `az graph`
 - Permisos de lectura en la suscripción de Azure
+- `pip install requests`
 
 ## Ejecución básica
 ```sh
