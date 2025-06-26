@@ -2,3 +2,5 @@ azure_full_hierarchy_with_icons.drawio
 azure_full_hierarchy_with_icons.drawio:Zone.Identifier
 src/__pycache__/*
 
+.azure_cache/*
+test_output.log
