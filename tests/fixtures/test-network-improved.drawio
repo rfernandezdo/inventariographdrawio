@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net" agent="python-script">
+  <diagram id="main-diagram" name="Azure Infrastructure">
+    <mxGraphModel dx="2500" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_internet" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="80" y="80" width="800" height="120" as="geometry"/>
+          <object label="🌐 Internet / External Services" as="value"/>
+        </mxCell>
+        <mxCell id="group_edge" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#ef6c00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="80" y="230" width="800" height="150" as="geometry"/>
+          <object label="🛡️ Edge / Perimeter Security" as="value"/>
+        </mxCell>
+        <mxCell id="group_region_0" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;" parent="1" vertex="1">
+          <mxGeometry x="80" y="430" width="680" height="430" as="geometry"/>
+          <object label="🌍 Region: Westeurope" as="value"/>
+        </mxCell>
+        <mxCell id="group_vnet_0" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#2e7d32;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;" parent="group_region_0" vertex="1">
+          <mxGeometry x="120" y="510" width="600" height="340" as="geometry"/>
+          <object label="🏗️ VNet: vnet-prod" as="value"/>
+        </mxCell>
+        <mxCell id="group_tier_public_0" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#c62828;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;" parent="group_vnet_0" vertex="1">
+          <mxGeometry x="140" y="560" width="560" height="80" as="geometry"/>
+          <object label="Public Tier" as="value"/>
+        </mxCell>
+        <mxCell id="group_tier_application_1" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1565c0;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;" parent="group_vnet_0" vertex="1">
+          <mxGeometry x="140" y="650" width="560" height="80" as="geometry"/>
+          <object label="Application Tier" as="value"/>
+        </mxCell>
+        <mxCell id="group_tier_data_2" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#ad1457;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;" parent="group_vnet_0" vertex="1">
+          <mxGeometry x="140" y="740" width="560" height="80" as="geometry"/>
+          <object label="Data Tier" as="value"/>
+        </mxCell>
+        <mxCell id="group_connectivity" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f9fbe7;strokeColor=#689f38;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="80" y="1110" width="600" height="100" as="geometry"/>
+          <object label="🔗 Hybrid Connectivity" as="value"/>
+        </mxCell>
+        <mxCell id="group_security" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#424242;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" parent="1" vertex="1">
+          <mxGeometry x="860" y="80" width="250" height="330" as="geometry"/>
+          <object label="🔒 Security &amp; Management" as="value"/>
+        </mxCell>
+        <mxCell id="node-0" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="group_security" vertex="1">
+          <mxGeometry x="880" y="260" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;Production Management Group&lt;/b&gt;" as="value" type="Microsoft.Management/managementGroups"/>
+        </mxCell>
+        <mxCell id="node-1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="group_security" vertex="1">
+          <mxGeometry x="880" y="330" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;Production Subscription&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions"/>
+        </mxCell>
+        <mxCell id="node-2" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Public_IP_Addresses.svg" parent="group_internet" vertex="1">
+          <mxGeometry x="130" y="115" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;pip-appgw&lt;/b&gt;" as="value" type="Microsoft.Network/publicIPAddresses"/>
+        </mxCell>
+        <mxCell id="node-3" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/DNS_Zone.svg" parent="group_internet" vertex="1">
+          <mxGeometry x="280" y="115" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;contoso.com&lt;/b&gt;" as="value" type="Microsoft.Network/dnsZones"/>
+        </mxCell>
+        <mxCell id="node-4" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Application_Gateway.svg" parent="group_edge" vertex="1">
+          <mxGeometry x="130" y="280" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;appgw-prod&lt;/b&gt;" as="value" type="Microsoft.Network/applicationGateways"/>
+        </mxCell>
+        <mxCell id="node-5" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Azure_Firewall.svg" parent="group_edge" vertex="1">
+          <mxGeometry x="280" y="280" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;fw-prod&lt;/b&gt;" as="value" type="Microsoft.Network/azureFirewalls"/>
+        </mxCell>
+        <mxCell id="node-6" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Virtual_Networks.svg" parent="group_vnet_0" vertex="1">
+          <mxGeometry x="140" y="530" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;vnet-prod&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks"/>
+        </mxCell>
+        <mxCell id="node-7" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="group_tier_public_0" vertex="1">
+          <mxGeometry x="160" y="585" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;subnet-public-web&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-8" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="group_tier_application_1" vertex="1">
+          <mxGeometry x="160" y="675" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;subnet-app-tier&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-9" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="group_tier_data_2" vertex="1">
+          <mxGeometry x="160" y="765" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;subnet-database&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-10" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="group_tier_public_0" vertex="1">
+          <mxGeometry x="260" y="585" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;vm-web-01&lt;/b&gt;" as="value" type="Microsoft.Compute/virtualMachines"/>
+        </mxCell>
+        <mxCell id="node-11" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="group_tier_application_1" vertex="1">
+          <mxGeometry x="260" y="675" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;vm-app-01&lt;/b&gt;" as="value" type="Microsoft.Compute/virtualMachines"/>
+        </mxCell>
+        <mxCell id="node-12" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Load_Balancers.svg" parent="group_edge" vertex="1">
+          <mxGeometry x="430" y="280" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;lb-internal&lt;/b&gt;" as="value" type="Microsoft.Network/loadBalancers"/>
+        </mxCell>
+        <mxCell id="node-13" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Virtual_Network_Gateways.svg" parent="group_connectivity" vertex="1">
+          <mxGeometry x="130" y="1135" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;vgw-prod&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworkGateways"/>
+        </mxCell>
+        <mxCell id="node-14" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Network_Security_Groups.svg" parent="group_security" vertex="1">
+          <mxGeometry x="880" y="120" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;nsg-web&lt;/b&gt;" as="value" type="Microsoft.Network/networkSecurityGroups"/>
+        </mxCell>
+        <mxCell id="node-15" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/security/Key_Vaults.svg" parent="group_security" vertex="1">
+          <mxGeometry x="880" y="190" width="60" height="60" as="geometry"/>
+          <object label="&lt;b&gt;kv-prod&lt;/b&gt;" as="value" type="Microsoft.KeyVault/vaults"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

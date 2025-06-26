@@ -1,0 +1,361 @@
+{
+  "metadata": {
+    "exported_at": "2025-06-26T23:17:04.751328",
+    "source": "masked_real_patterns",
+    "total_items": 15,
+    "total_dependencies": 17
+  },
+  "items": [
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/contoso-root",
+      "type": "microsoft.management/managementgroups",
+      "name": "contoso-root",
+      "displayName": "Contoso Root",
+      "properties": {
+        "tenantId": "12345678-1234-1234-1234-123456789012",
+        "displayName": "Contoso Root",
+        "details": {
+          "managementGroupAncestorsChain": [
+            {
+              "displayName": "Tenant Root Group",
+              "name": "12345678-1234-1234-1234-123456789012"
+            }
+          ],
+          "parent": {
+            "displayName": "Tenant Root Group",
+            "id": "/providers/Microsoft.Management/managementGroups/12345678-1234-1234-1234-123456789012",
+            "name": "12345678-1234-1234-1234-123456789012"
+          }
+        }
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/contoso-platform",
+      "type": "microsoft.management/managementgroups",
+      "name": "contoso-platform",
+      "displayName": "Platform",
+      "properties": {
+        "tenantId": "12345678-1234-1234-1234-123456789012",
+        "displayName": "Platform",
+        "details": {
+          "managementGroupAncestorsChain": [
+            {
+              "displayName": "Contoso Root",
+              "name": "contoso-root"
+            },
+            {
+              "displayName": "Tenant Root Group",
+              "name": "12345678-1234-1234-1234-123456789012"
+            }
+          ],
+          "parent": {
+            "displayName": "Contoso Root",
+            "id": "/providers/Microsoft.Management/managementGroups/contoso-root",
+            "name": "contoso-root"
+          }
+        }
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/contoso-connectivity",
+      "type": "microsoft.management/managementgroups",
+      "name": "contoso-connectivity",
+      "displayName": "Connectivity",
+      "properties": {
+        "tenantId": "12345678-1234-1234-1234-123456789012",
+        "displayName": "Connectivity",
+        "details": {
+          "managementGroupAncestorsChain": [
+            {
+              "displayName": "Platform",
+              "name": "contoso-platform"
+            },
+            {
+              "displayName": "Contoso Root",
+              "name": "contoso-root"
+            },
+            {
+              "displayName": "Tenant Root Group",
+              "name": "12345678-1234-1234-1234-123456789012"
+            }
+          ],
+          "parent": {
+            "displayName": "Platform",
+            "id": "/providers/Microsoft.Management/managementGroups/contoso-platform",
+            "name": "contoso-platform"
+          }
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890",
+      "type": "microsoft.resources/subscriptions",
+      "name": "contoso-prod-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "managedByTenants": [],
+        "managementGroupAncestorsChain": [
+          {
+            "displayName": "Connectivity",
+            "name": "contoso-connectivity"
+          },
+          {
+            "displayName": "Platform",
+            "name": "contoso-platform"
+          },
+          {
+            "displayName": "Contoso Root",
+            "name": "contoso-root"
+          },
+          {
+            "displayName": "Tenant Root Group",
+            "name": "12345678-1234-1234-1234-123456789012"
+          }
+        ],
+        "state": "Enabled",
+        "subscriptionPolicies": {
+          "locationPlacementId": "Public_2014-09-01",
+          "quotaId": "PayAsYouGo_2014-09-01",
+          "spendingLimit": "Off"
+        }
+      },
+      "tenantId": "12345678-1234-1234-1234-123456789012"
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-network-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "tags": {
+        "environment": "production",
+        "project": "networking"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-compute-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "tags": {
+        "environment": "production",
+        "project": "compute"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001",
+      "type": "microsoft.network/virtualnetworks",
+      "name": "vnet-hub-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "enableDdosProtection": false,
+        "provisioningState": "Succeeded"
+      },
+      "tags": {
+        "environment": "production",
+        "type": "hub"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-gateway-prd-we-001",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-gateway-prd-we-001",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "vnetId": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "provisioningState": "Succeeded"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-compute-prd-we-001",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-compute-prd-we-001",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "vnetId": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001",
+      "properties": {
+        "addressPrefix": "10.0.2.0/24",
+        "provisioningState": "Succeeded"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/publicIPAddresses/pip-gateway-prd-we-001",
+      "type": "microsoft.network/publicipaddresses",
+      "name": "pip-gateway-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "provisioningState": "Succeeded"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/networkSecurityGroups/nsg-compute-prd-we-001",
+      "type": "microsoft.network/networksecuritygroups",
+      "name": "nsg-compute-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "provisioningState": "Succeeded",
+        "securityRules": []
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/applicationGateways/agw-web-prd-we-001",
+      "type": "microsoft.network/applicationgateways",
+      "name": "agw-web-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "provisioningState": "Succeeded",
+        "sku": {
+          "name": "Standard_v2",
+          "tier": "Standard_v2"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Compute/virtualMachines/vm-web-prd-we-001",
+      "type": "microsoft.compute/virtualmachines",
+      "name": "vm-web-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B2s"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Network/networkInterfaces/nic-vm-web-prd-we-001"
+            }
+          ]
+        },
+        "provisioningState": "Succeeded"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Web/sites/app-web-prd-we-001",
+      "type": "microsoft.web/sites",
+      "name": "app-web-prd-we-001",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "state": "Running",
+        "serverFarmId": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Web/serverfarms/plan-web-prd-we-001"
+      }
+    },
+    {
+      "id": "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Storage/storageAccounts/stcontosoprdwe001",
+      "type": "microsoft.storage/storageaccounts",
+      "name": "stcontosoprdwe001",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prd-we-001",
+      "subscriptionId": "abcdef12-3456-7890-abcd-ef1234567890",
+      "properties": {
+        "primaryLocation": "westeurope",
+        "provisioningState": "Succeeded",
+        "accountType": "Standard_LRS"
+      }
+    }
+  ],
+  "dependencies": [
+    [
+      "/providers/Microsoft.Management/managementGroups/12345678-1234-1234-1234-123456789012",
+      "/providers/Microsoft.Management/managementGroups/contoso-root"
+    ],
+    [
+      "/providers/Microsoft.Management/managementGroups/contoso-root",
+      "/providers/Microsoft.Management/managementGroups/contoso-platform"
+    ],
+    [
+      "/providers/Microsoft.Management/managementGroups/contoso-platform",
+      "/providers/Microsoft.Management/managementGroups/contoso-connectivity"
+    ],
+    [
+      "/providers/Microsoft.Management/managementGroups/contoso-connectivity",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-gateway-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-compute-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/publicIPAddresses/pip-gateway-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/networkSecurityGroups/nsg-compute-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/applicationGateways/agw-web-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Compute/virtualMachines/vm-web-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Web/sites/app-web-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-compute-prd-we-001/providers/Microsoft.Storage/storageAccounts/stcontosoprdwe001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-gateway-prd-we-001"
+    ],
+    [
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001",
+      "/subscriptions/abcdef12-3456-7890-abcd-ef1234567890/resourceGroups/rg-network-prd-we-001/providers/Microsoft.Network/virtualNetworks/vnet-hub-prd-we-001/subnets/snet-compute-prd-we-001"
+    ]
+  ]
+}

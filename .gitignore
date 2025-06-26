@@ -4,3 +4,4 @@ src/__pycache__/*
 
 .azure_cache/*
 test_output.log
+__pycache__/*

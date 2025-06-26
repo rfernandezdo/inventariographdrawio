@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net" agent="python-script">
+  <diagram id="main-diagram" name="Azure Infrastructure">
+    <mxGraphModel dx="2500" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="node-0" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="0" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;Test Management Group&lt;/b&gt;" as="value" type="Microsoft.Management/managementGroups"/>
+        </mxCell>
+        <mxCell id="node-1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+          <mxGeometry x="180" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;Test Subscription&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions"/>
+        </mxCell>
+        <mxCell id="node-2" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="360" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;rg-network&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions/resourcegroups"/>
+        </mxCell>
+        <mxCell id="node-3" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Virtual_Networks.svg" parent="1" vertex="1">
+          <mxGeometry x="540" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vnet-main&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks"/>
+        </mxCell>
+        <mxCell id="node-4" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="1" vertex="1">
+          <mxGeometry x="720" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;subnet-web&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-5" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="1" vertex="1">
+          <mxGeometry x="900" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;subnet-db&lt;/b&gt;" as="value" type="Microsoft.Network/virtualNetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-6" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Application_Gateway.svg" parent="1" vertex="1">
+          <mxGeometry x="1080" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;appgw-main&lt;/b&gt;" as="value" type="Microsoft.Network/applicationGateways"/>
+        </mxCell>
+        <mxCell id="node-7" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Public_IP_Addresses.svg" parent="1" vertex="1">
+          <mxGeometry x="1260" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;pip-appgw&lt;/b&gt;" as="value" type="Microsoft.Network/publicIPAddresses"/>
+        </mxCell>
+        <mxCell id="node-8" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="1" vertex="1">
+          <mxGeometry x="1440" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vm-web&lt;/b&gt;" as="value" type="Microsoft.Compute/virtualMachines"/>
+        </mxCell>
+        <mxCell id="node-9" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="1" vertex="1">
+          <mxGeometry x="1620" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vm-db&lt;/b&gt;" as="value" type="Microsoft.Compute/virtualMachines"/>
+        </mxCell>
+        <mxCell id="node-10" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/App_Services.svg" parent="1" vertex="1">
+          <mxGeometry x="1800" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;app-web&lt;/b&gt;" as="value" type="Microsoft.Web/sites"/>
+        </mxCell>
+        <mxCell id="node-11" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Network_Security_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1980" y="1500" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;nsg-web&lt;/b&gt;" as="value" type="Microsoft.Network/networkSecurityGroups"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

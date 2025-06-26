@@ -161,142 +161,367 @@ def generate_components_layout(items, dependencies, levels, mg_id_to_idx, sub_id
     return node_positions
 
 def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx):
-    """Disposición para diagrama de red - estructura similar a diagramas oficiales de Azure"""
+    """Disposición para diagrama de red - arquitectura de red realista estilo Azure"""
     node_positions = {}
     group_info = []
-    resource_to_parent_id = {}  # Mapea item_idx -> parent_cell_id
+    resource_to_parent_id = {}
 
-    # Organizar recursos por categorías de red
+    # Organizar recursos por categorías de red con enfoque arquitectónico
     network_structure = {
-        'governance': [], 'internet': [], 'edge': [], 'vnets': {},
-        'compute': [], 'data': [], 'load_balancing': [], 'connectivity': [],
-        'security': [], 'other': []
+        'internet': [],      # Internet Gateway, Public IPs, DNS externos
+        'edge': [],          # Application Gateway, Load Balancers externos, Firewall
+        'vnets': {},         # Virtual Networks organizadas por región
+        'connectivity': [],  # VPN Gateways, ExpressRoute, Connections
+        'security': [],      # NSGs, Azure Firewall, Key Vault
+        'management': []     # Management Groups, Subscriptions (solo como contexto mínimo)
     }
+    
+    # Mapeo de subnets y sus recursos
     subnet_resources = {}
+    vnet_to_region = {}
+    
+    print("🔍 Analizando recursos para diagrama de red...")
 
-    # 1. Identificar VNets y subnets
+    # 1. Identificar VNets, subnets y regiones
     for i, item in enumerate(items):
         resource_type = (item.get('type') or '').lower()
+        location = (item.get('location') or 'unknown').lower()
+        
         if resource_type == 'microsoft.network/virtualnetworks':
             vnet_id = item['id'].lower()
-            network_structure['vnets'][vnet_id] = {'vnet': (i, item), 'subnets': []}
+            vnet_to_region[vnet_id] = location
+            if location not in network_structure['vnets']:
+                network_structure['vnets'][location] = {}
+            network_structure['vnets'][location][vnet_id] = {
+                'vnet': (i, item), 
+                'subnets': {}
+            }
+            
         elif resource_type == 'microsoft.network/virtualnetworks/subnets':
             subnet_id = item['id'].lower()
-            vnet_id = item.get('vnetId', '').lower() or '/'.join(subnet_id.split('/')[:-2])
-            if vnet_id in network_structure['vnets']:
-                network_structure['vnets'][vnet_id]['subnets'].append((i, item))
+            # Extraer VNet ID de la subnet
+            vnet_id = '/'.join(subnet_id.split('/')[:-2])
+            subnet_name = item.get('name', '').lower()
+            
+            # Clasificar subnet por tipo (para mejor organización visual)
+            subnet_type = 'private'  # default
+            if any(keyword in subnet_name for keyword in ['public', 'web', 'frontend', 'gateway']):
+                subnet_type = 'public'
+            elif any(keyword in subnet_name for keyword in ['db', 'database', 'data', 'backend']):
+                subnet_type = 'data'
+            elif any(keyword in subnet_name for keyword in ['app', 'application', 'middle']):
+                subnet_type = 'application'
+            
+            region = vnet_to_region.get(vnet_id, 'unknown')
+            if region in network_structure['vnets'] and vnet_id in network_structure['vnets'][region]:
+                if subnet_type not in network_structure['vnets'][region][vnet_id]['subnets']:
+                    network_structure['vnets'][region][vnet_id]['subnets'][subnet_type] = []
+                network_structure['vnets'][region][vnet_id]['subnets'][subnet_type].append((i, item))
                 subnet_resources[subnet_id] = []
 
-    # 2. Clasificar todos los demás recursos y asociarlos a subnets si es posible
+    # 2. Clasificar recursos por función de red
     for i, item in enumerate(items):
         resource_type = (item.get('type') or '').lower()
+        
+        # Skip ya procesados
         if resource_type in ['microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets']:
             continue
-
+            
+        # Determinar subnet de destino si aplica
         resource_subnet = None
         props = item.get('properties', {})
-        if props.get('subnet', {}).get('id'):
-            resource_subnet = props['subnet']['id'].lower()
-        elif props.get('virtualNetworkConfiguration', {}).get('subnetResourceId'):
-            resource_subnet = props['virtualNetworkConfiguration']['subnetResourceId'].lower()
-        elif '/subnets/' in item['id'].lower():
+        
+        # Buscar referencias a subnet en diferentes propiedades
+        subnet_refs = [
+            props.get('subnet', {}).get('id'),
+            props.get('virtualNetworkConfiguration', {}).get('subnetResourceId'),
+            props.get('ipConfigurations', [{}])[0].get('subnet', {}).get('id') if props.get('ipConfigurations') else None
+        ]
+        
+        for ref in subnet_refs:
+            if ref:
+                resource_subnet = ref.lower()
+                break
+        
+        # Si no encontramos referencia directa, intentar extraer del ID
+        if not resource_subnet and '/subnets/' in item['id'].lower():
             parts = item['id'].lower().split('/subnets/')
-            resource_subnet = f"{parts[0]}/subnets/{parts[1].split('/')[0]}"
+            if len(parts) > 1:
+                resource_subnet = f"{parts[0]}/subnets/{parts[1].split('/')[0]}"
 
+        # Asignar a subnet si encontramos una
         if resource_subnet and resource_subnet in subnet_resources:
             subnet_resources[resource_subnet].append((i, item))
             continue
 
-        # Clasificación general si no está en una subnet
-        if resource_type in ['microsoft.management/managementgroups', 'microsoft.resources/subscriptions', 'microsoft.resources/subscriptions/resourcegroups']:
-            network_structure['governance'].append((i, item))
-        elif any(t in resource_type for t in ['publicip', 'trafficmanager', 'dns', 'frontdoor']):
+        # Clasificación por función de red (recursos no asignados a subnets específicas)
+        if any(t in resource_type for t in ['publicip', 'dns', 'trafficmanager', 'frontdoor']):
             network_structure['internet'].append((i, item))
-        elif any(t in resource_type for t in ['applicationgateway', 'firewall']):
+        elif any(t in resource_type for t in ['applicationgateway', 'loadbalancer', 'firewall']):
             network_structure['edge'].append((i, item))
-        elif any(t in resource_type for t in ['compute/virtualmachines', 'web/sites', 'containerservice']):
-             network_structure['compute'].append((i, item))
-        else:
-            network_structure['other'].append((i, item))
+        elif any(t in resource_type for t in ['vpngateway', 'expressroute', 'connection', 'virtualnetworkgateway']):
+            network_structure['connectivity'].append((i, item))
+        elif any(t in resource_type for t in ['networksecuritygroup', 'keyvault', 'privatednszone']):
+            network_structure['security'].append((i, item))
+        elif resource_type in ['microsoft.management/managementgroups', 'microsoft.resources/subscriptions']:
+            network_structure['management'].append((i, item))
 
-    # --- Layout y Posicionamiento ---
-    margin, layer_spacing, vnet_width, vnet_padding, subnet_padding, resource_in_subnet_size = 100, 150, 900, 50, 30, 60
+    # --- LAYOUT MEJORADO PARA ARQUITECTURA DE RED ---
     
-    # Capas superiores
-    y = margin
-    x = margin
-    for idx, _ in network_structure['governance']:
-        node_positions[idx] = (x, y); x += 250
-    y += 120
-    x = margin
-    for idx, _ in network_structure['internet']:
-        node_positions[idx] = (x, y); x += 220
-    y += layer_spacing
-    x = margin
-    for idx, _ in network_structure['edge']:
-        node_positions[idx] = (x, y); x += 250
+    # Configuración de layout
+    margin = 80
+    internet_height = 120
+    edge_height = 150
+    vnet_padding = 40
+    subnet_padding = 25
+    region_spacing = 200
+    tier_spacing = 180
     
-    # VNets
-    vnet_start_y = y + layer_spacing
-    current_vnet_x = margin
-    max_vnet_height = 0
-    vnet_counter, subnet_counter = 0, 0
-
-    for vnet_id, vnet_data in network_structure['vnets'].items():
-        vnet_idx, vnet_item = vnet_data['vnet']
-        subnets = sorted(vnet_data['subnets'], key=lambda s: s[1].get('name'))
+    current_y = margin
+    
+    # 1. CAPA INTERNET (Internet/External) - Top
+    print("📡 Posicionando capa Internet...")
+    if network_structure['internet']:
+        internet_group_id = "group_internet"
+        internet_width = max(len(network_structure['internet']) * 200, 800)
         
-        vnet_cell_id = f"group_vnet_{vnet_counter}"; vnet_counter += 1
-        # El VNet en sí es un contenedor principal, no se asigna parent aquí (se usa la celda raíz '1')
-        # resource_to_parent_id[vnet_idx] = vnet_cell_id
+        group_info.append({
+            'id': internet_group_id,
+            'parent_id': '1',
+            'type': 'internet_zone',
+            'x': margin,
+            'y': current_y,
+            'width': internet_width,
+            'height': internet_height,
+            'label': '🌐 Internet / External Services',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
+        })
+        
+        x_offset = margin + 50
+        for idx, item in network_structure['internet']:
+            node_positions[idx] = (x_offset, current_y + internet_height//2 - 25)
+            resource_to_parent_id[idx] = internet_group_id
+            x_offset += 150
+            
+        current_y += internet_height + 30
 
-        # Calcular altura dinámica
-        subnet_heights = {s[1]['id'].lower(): 60 + ((len(subnet_resources.get(s[1]['id'].lower(), [])) + 1) // 2) * (resource_in_subnet_size + 20) for s in subnets}
-        num_subnets = len(subnets)
-        subnet_cols = 2 if num_subnets > 1 else 1
-        subnet_rows = (num_subnets + subnet_cols - 1) // subnet_cols
-        vnet_internal_height = sum(max(subnet_heights[s[1]['id'].lower()] for s in subnets[i*subnet_cols:(i+1)*subnet_cols]) if subnets[i*subnet_cols:(i+1)*subnet_cols] else 0 for i in range(subnet_rows))
-        vnet_h = vnet_internal_height + (subnet_padding * (subnet_rows -1)) + vnet_padding * 2 + 40
-        max_vnet_height = max(max_vnet_height, vnet_h)
+    # 2. CAPA EDGE (Edge/Perimeter) - Application Gateways, Load Balancers
+    print("🛡️ Posicionando capa Edge...")
+    if network_structure['edge']:
+        edge_group_id = "group_edge"
+        edge_width = max(len(network_structure['edge']) * 200, 800)
+        
+        group_info.append({
+            'id': edge_group_id,
+            'parent_id': '1',
+            'type': 'edge_zone',
+            'x': margin,
+            'y': current_y,
+            'width': edge_width,
+            'height': edge_height,
+            'label': '🛡️ Edge / Perimeter Security',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#ef6c00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
+        })
+        
+        x_offset = margin + 50
+        for idx, item in network_structure['edge']:
+            node_positions[idx] = (x_offset, current_y + edge_height//2 - 25)
+            resource_to_parent_id[idx] = edge_group_id
+            x_offset += 150
+            
+        current_y += edge_height + 50
 
-        node_positions[vnet_idx] = (current_vnet_x + vnet_padding, vnet_start_y + vnet_padding)
-        group_info.append({'id': vnet_cell_id, 'parent_id': '1', 'type': 'vnet_container', 'x': current_vnet_x, 'y': vnet_start_y, 'width': vnet_width, 'height': vnet_h, 'label': f"VNet: {vnet_item.get('name', 'N/A')}", 'style': 'container=1;collapsible=1;recursiveResize=0;rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;dashPattern=8 8;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'})
-
-        current_subnet_y = vnet_start_y + vnet_padding + 40
-        for i in range(subnet_rows):
-            row_subnets = subnets[i*subnet_cols:(i+1)*subnet_cols]
-            max_row_height = max(subnet_heights[s[1]['id'].lower()] for s in row_subnets) if row_subnets else 0
-            for j, (subnet_item_idx, subnet_item) in enumerate(row_subnets):
-                subnet_id = subnet_item['id'].lower()
-                subnet_cell_id = f"group_subnet_{subnet_counter}"; subnet_counter += 1
-                resource_to_parent_id[subnet_item_idx] = subnet_cell_id
+    # 3. CAPA VNETS (Virtual Networks por región) - Core
+    print("🏗️ Posicionando VNets por región...")
+    vnet_start_y = current_y
+    max_region_width = 0
+    region_counter = 0
+    
+    for region, vnets in network_structure['vnets'].items():
+        if not vnets:
+            continue
+            
+        print(f"   📍 Región: {region}")
+        region_group_id = f"group_region_{region_counter}"
+        region_counter += 1
+        
+        # Calcular dimensiones de la región
+        vnet_count = len(vnets)
+        vnets_per_row = min(2, vnet_count)  # Máximo 2 VNets por fila
+        vnet_rows = (vnet_count + vnets_per_row - 1) // vnets_per_row
+        
+        vnet_width = 600
+        vnet_height_base = 300
+        region_width = vnets_per_row * vnet_width + (vnets_per_row + 1) * vnet_padding
+        max_region_width = max(max_region_width, region_width)
+        
+        # Crear grupo de región
+        region_y = vnet_start_y
+        region_height = vnet_rows * (vnet_height_base + 50) + (vnet_rows + 1) * vnet_padding
+        
+        group_info.append({
+            'id': region_group_id,
+            'parent_id': '1',
+            'type': 'region_container',
+            'x': margin,
+            'y': region_y,
+            'width': region_width,
+            'height': region_height,
+            'label': f'🌍 Region: {region.title()}',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
+        })
+        
+        # Posicionar VNets dentro de la región
+        vnet_counter = 0
+        for vnet_row in range(vnet_rows):
+            row_vnets = list(vnets.items())[vnet_row * vnets_per_row:(vnet_row + 1) * vnets_per_row]
+            
+            for vnet_col, (vnet_id, vnet_data) in enumerate(row_vnets):
+                vnet_idx, vnet_item = vnet_data['vnet']
+                vnet_group_id = f"group_vnet_{vnet_counter}"
+                vnet_counter += 1
                 
-                subnet_w = (vnet_width - (subnet_padding * (subnet_cols + 1))) / subnet_cols
-                subnet_h = subnet_heights[subnet_id]
-                subnet_x = current_vnet_x + subnet_padding + (j * (subnet_w + subnet_padding))
+                vnet_x = margin + vnet_padding + vnet_col * (vnet_width + vnet_padding)
+                vnet_y = region_y + vnet_padding + 40 + vnet_row * (vnet_height_base + 50)
                 
-                node_positions[subnet_item_idx] = (subnet_x + 20, current_subnet_y + 20)
-                group_info.append({'id': subnet_cell_id, 'parent_id': vnet_cell_id, 'type': 'subnet_container', 'x': subnet_x, 'y': current_subnet_y, 'width': subnet_w, 'height': subnet_h, 'label': f"Subnet: {subnet_item.get('name', 'N/A')}", 'style': 'container=1;collapsible=1;recursiveResize=0;rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'})
+                # Calcular altura dinámica basada en subnets
+                subnet_types = vnet_data['subnets']
+                subnet_tiers = ['public', 'application', 'private', 'data']  # Orden lógico de tiers
                 
-                res_x_start, res_y_start = subnet_x + 30, current_subnet_y + 60
-                for res_i, (res_idx, _) in enumerate(subnet_resources.get(subnet_id, [])):
-                    resource_to_parent_id[res_idx] = subnet_cell_id
-                    node_positions[res_idx] = (res_x_start + (res_i % 2) * (resource_in_subnet_size + 30), res_y_start + (res_i // 2) * (resource_in_subnet_size + 20))
-            current_subnet_y += max_row_height + subnet_padding
-        current_vnet_x += vnet_width + 150
+                tier_height = 80
+                vnet_actual_height = max(vnet_height_base, len([t for t in subnet_tiers if t in subnet_types]) * tier_height + 100)
+                
+                # Crear contenedor de VNet
+                group_info.append({
+                    'id': vnet_group_id,
+                    'parent_id': region_group_id,
+                    'type': 'vnet_container',
+                    'x': vnet_x,
+                    'y': vnet_y,
+                    'width': vnet_width,
+                    'height': vnet_actual_height,
+                    'label': f'🏗️ VNet: {vnet_item.get("name", "N/A")}',
+                    'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#2e7d32;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
+                })
+                
+                node_positions[vnet_idx] = (vnet_x + 20, vnet_y + 20)
+                resource_to_parent_id[vnet_idx] = vnet_group_id
+                
+                # Organizar subnets por tiers
+                current_tier_y = vnet_y + 50
+                subnet_counter = 0
+                
+                for tier_name in subnet_tiers:
+                    if tier_name not in subnet_types:
+                        continue
+                        
+                    tier_subnets = subnet_types[tier_name]
+                    if not tier_subnets:
+                        continue
+                    
+                    # Crear tier de subnet
+                    tier_group_id = f"group_tier_{tier_name}_{subnet_counter}"
+                    subnet_counter += 1
+                    
+                    tier_colors = {
+                        'public': {'fill': '#ffebee', 'stroke': '#c62828'},
+                        'application': {'fill': '#e3f2fd', 'stroke': '#1565c0'},
+                        'private': {'fill': '#f1f8e9', 'stroke': '#388e3c'},
+                        'data': {'fill': '#fce4ec', 'stroke': '#ad1457'}
+                    }
+                    
+                    colors = tier_colors.get(tier_name, {'fill': '#f5f5f5', 'stroke': '#616161'})
+                    
+                    group_info.append({
+                        'id': tier_group_id,
+                        'parent_id': vnet_group_id,
+                        'type': 'subnet_tier',
+                        'x': vnet_x + 20,
+                        'y': current_tier_y,
+                        'width': vnet_width - 40,
+                        'height': tier_height,
+                        'label': f'{tier_name.title()} Tier',
+                        'style': f'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor={colors["fill"]};strokeColor={colors["stroke"]};fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;'
+                    })
+                    
+                    # Posicionar subnets y sus recursos
+                    subnet_x = vnet_x + 40
+                    for subnet_idx, subnet_item in tier_subnets:
+                        subnet_id = subnet_item['id'].lower()
+                        
+                        node_positions[subnet_idx] = (subnet_x, current_tier_y + 25)
+                        resource_to_parent_id[subnet_idx] = tier_group_id
+                        
+                        # Posicionar recursos dentro de la subnet
+                        resource_x = subnet_x + 100
+                        for res_idx, res_item in subnet_resources.get(subnet_id, []):
+                            node_positions[res_idx] = (resource_x, current_tier_y + 25)
+                            resource_to_parent_id[res_idx] = tier_group_id
+                            resource_x += 80
+                        
+                        subnet_x += max(200, len(subnet_resources.get(subnet_id, [])) * 80 + 120)
+                    
+                    current_tier_y += tier_height + 10
+        
+        vnet_start_y += region_height + region_spacing
 
-    # Capas inferiores
-    current_y = vnet_start_y + max_vnet_height + layer_spacing
-    def draw_layer(title, resources, y_start):
-        if not resources: return y_start
-        x = margin
-        for idx, _ in resources:
-            node_positions[idx] = (x, y_start); x += 220
-        return y_start + layer_spacing
+    # 4. CAPA CONECTIVIDAD (VPN, ExpressRoute) - Bottom
+    current_y = vnet_start_y + 50
+    if network_structure['connectivity']:
+        print("🔗 Posicionando capa de conectividad...")
+        connectivity_group_id = "group_connectivity"
+        connectivity_width = max(len(network_structure['connectivity']) * 180, 600)
+        connectivity_height = 100
+        
+        group_info.append({
+            'id': connectivity_group_id,
+            'parent_id': '1',
+            'type': 'connectivity_zone',
+            'x': margin,
+            'y': current_y,
+            'width': connectivity_width,
+            'height': connectivity_height,
+            'label': '🔗 Hybrid Connectivity',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f9fbe7;strokeColor=#689f38;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
+        })
+        
+        x_offset = margin + 50
+        for idx, item in network_structure['connectivity']:
+            node_positions[idx] = (x_offset, current_y + connectivity_height//2 - 25)
+            resource_to_parent_id[idx] = connectivity_group_id
+            x_offset += 150
+        
+        current_y += connectivity_height + 30
 
-    current_y = draw_layer("Compute (External)", network_structure['compute'], current_y)
-    current_y = draw_layer("Other Resources", network_structure['other'], current_y)
+    # 5. CAPA SEGURIDAD (Security, Management) - Side panel
+    if network_structure['security'] or network_structure['management']:
+        print("🔒 Posicionando recursos de seguridad y gestión...")
+        security_x = margin + max_region_width + 100
+        security_y = margin
+        
+        all_security = network_structure['security'] + network_structure['management']
+        security_height = len(all_security) * 70 + 50
+        
+        security_group_id = "group_security"
+        group_info.append({
+            'id': security_group_id,
+            'parent_id': '1',
+            'type': 'security_zone',
+            'x': security_x,
+            'y': security_y,
+            'width': 250,
+            'height': security_height,
+            'label': '🔒 Security & Management',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#424242;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'
+        })
+        
+        y_offset = security_y + 40
+        for idx, item in all_security:
+            node_positions[idx] = (security_x + 20, y_offset)
+            resource_to_parent_id[idx] = security_group_id
+            y_offset += 70
 
+    print(f"✅ Layout de red completado: {len(node_positions)} recursos posicionados")
     return node_positions, group_info, resource_to_parent_id
 
 def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None, diagram_mode='infrastructure'):
