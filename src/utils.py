@@ -11,6 +11,12 @@ Por defecto, el script genera el diagrama completo de la jerarquía de Azure.
 
 Opciones disponibles:
 
+  --diagram-mode <infrastructure|components|network>
+      Tipo de diagrama a generar:
+      • infrastructure (por defecto): Jerarquía completa (Management Groups → Suscripciones → Resource Groups → Recursos)
+      • components: Recursos agrupados por función/tipo (Compute, Storage, Network, Database, etc.)
+      • network: Solo recursos de red organizados por capas (Internet, Edge, VNets, etc.)
+
   --no-embed-data
       No incrusta todos los datos en los nodos, solo el campo 'type'.
       Útil para reducir el tamaño del archivo .drawio.
@@ -25,6 +31,12 @@ Opciones disponibles:
 
   -h, --help
       Muestra esta ayuda y termina.
+
+Ejemplos de uso:
+  python src/cli.py                                    # Diagrama de infraestructura completo
+  python src/cli.py --diagram-mode components         # Diagrama agrupado por componentes
+  python src/cli.py --diagram-mode network            # Diagrama centrado en red
+  python src/cli.py --include-ids /subscriptions/xxx  # Solo una suscripción específica
 
 Notas:
 - Los IDs deben ser los IDs completos de Azure (puedes obtenerlos con 'az account management-group list', 'az account list', etc.).
