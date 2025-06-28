@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net" agent="python-script">
+  <diagram id="main-diagram" name="Azure Infrastructure">
+    <mxGraphModel dx="2500" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="azure_tenant_root" style="container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="100" y="50" width="200" height="80" as="geometry"/>
+          <object label="🏢 Azure Tenant (Root)" as="value"/>
+        </mxCell>
+        <mxCell id="node-0" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+          <mxGeometry x="290" y="250" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;Dev Subscription&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions"/>
+        </mxCell>
+        <mxCell id="node-1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="290" y="400" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;rg-test&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions/resourceGroups"/>
+        </mxCell>
+        <mxCell id="node-2" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="1" vertex="1">
+          <mxGeometry x="160" y="550" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vm1&lt;/b&gt;" as="value" type="Microsoft.Compute/virtualMachines"/>
+        </mxCell>
+        <mxCell id="node-3" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Disks.svg" parent="1" vertex="1">
+          <mxGeometry x="420" y="550" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;disk1&lt;/b&gt;" as="value" type="Microsoft.Compute/disks"/>
+        </mxCell>
+        <mxCell id="edge-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-1" target="node-0" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-2" target="node-1" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-3" target="node-1" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-3" target="node-2" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

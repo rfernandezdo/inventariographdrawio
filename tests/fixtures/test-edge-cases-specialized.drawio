@@ -1,0 +1,485 @@
+<mxfile host="65bd71144e">
+    <diagram id="main-diagram" name="Azure Infrastructure">
+        <mxGraphModel dx="4857" dy="2580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <object label="&lt;b&gt;Enterprise Root Tenant&lt;/b&gt;" type="Microsoft.Management/managementGroups" id="node-0">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="4840" y="100" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;Enterprise Divisions&lt;/b&gt;" type="Microsoft.Management/managementGroups" id="node-1">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="4840" y="250" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;North America Region&lt;/b&gt;" type="Microsoft.Management/managementGroups" id="node-2">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="4840" y="400" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;USA Operations&lt;/b&gt;" type="Microsoft.Management/managementGroups" id="node-3">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="4840" y="550" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;USA Production Workloads&lt;/b&gt;" type="Microsoft.Management/managementGroups" id="node-4">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="3280" y="700" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;Hub Connectivity Subscription&lt;/b&gt;" type="Microsoft.Resources/subscriptions" id="node-5">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+                        <mxGeometry x="7440" y="700" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;Shared Services Subscription&lt;/b&gt;" type="Microsoft.Resources/subscriptions" id="node-6">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+                        <mxGeometry x="8870" y="700" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;AI/ML Platform Subscription&lt;/b&gt;" type="Microsoft.Resources/subscriptions" id="node-7">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+                        <mxGeometry x="1850" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;IoT Telemetry Subscription&lt;/b&gt;" type="Microsoft.Resources/subscriptions" id="node-8">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+                        <mxGeometry x="5100" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;Disaster Recovery Subscription&lt;/b&gt;" type="Microsoft.Resources/subscriptions" id="node-9">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+                        <mxGeometry x="9520" y="700" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-global-dns&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-10">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="7050" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-express-route&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-11">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="7960" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-backup-vault&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-12">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="8870" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-machine-learning&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-13">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="1460" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-cognitive-services&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-14">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="3280" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-iot-hub&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-15">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="4190" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-time-series&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-16">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="5620" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rg-site-recovery&lt;/b&gt;" type="Microsoft.Resources/subscriptions/resourceGroups" id="node-17">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+                        <mxGeometry x="9520" y="850" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;er-primary-circuit&lt;/b&gt;" type="Microsoft.Network/expressRouteCircuits" id="node-18">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/ExpressRoute_Circuits.svg" parent="1" vertex="1">
+                        <mxGeometry x="7700" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;ergw-hub-gateway&lt;/b&gt;" type="Microsoft.Network/expressRouteGateways" id="node-19">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="7960" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;privatelink.database.windows.net&lt;/b&gt;" type="Microsoft.Network/privateDnsZones" id="node-20">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="6660" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;privatelink.blob.core.windows.net&lt;/b&gt;" type="Microsoft.Network/privateDnsZones" id="node-21">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="7440" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;tm-global-loadbalancer&lt;/b&gt;" type="Microsoft.Network/trafficManagerProfiles" id="node-22">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Traffic_Manager_Profile.svg" parent="1" vertex="1">
+                        <mxGeometry x="6920" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;fd-global-cdn&lt;/b&gt;" type="Microsoft.Network/frontDoors" id="node-23">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="7180" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;mlw-production&lt;/b&gt;" type="Microsoft.MachineLearningServices/workspaces" id="node-24">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Machine_Learning.svg" parent="1" vertex="1">
+                        <mxGeometry x="160" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;cog-text-analytics&lt;/b&gt;" type="Microsoft.CognitiveServices/accounts" id="node-25">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg" parent="1" vertex="1">
+                        <mxGeometry x="3020" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;cog-computer-vision&lt;/b&gt;" type="Microsoft.CognitiveServices/accounts" id="node-26">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg" parent="1" vertex="1">
+                        <mxGeometry x="3280" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;cog-speech-services&lt;/b&gt;" type="Microsoft.CognitiveServices/accounts" id="node-27">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg" parent="1" vertex="1">
+                        <mxGeometry x="3540" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;dbw-analytics-platform&lt;/b&gt;" type="Microsoft.Databricks/workspaces" id="node-28">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="420" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;iothub-telemetry-prod&lt;/b&gt;" type="Microsoft.Devices/IoTHubs" id="node-29">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="3800" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;iotc-fleet-management&lt;/b&gt;" type="Microsoft.IoTCentral/IoTApps" id="node-30">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="4060" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;tsi-telemetry-analytics&lt;/b&gt;" type="Microsoft.TimeSeriesInsights/environments" id="node-31">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="5100" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;evhns-telemetry-stream&lt;/b&gt;" type="Microsoft.EventHub/namespaces" id="node-32">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="4860" y="1410" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;evh-device-data&lt;/b&gt;" type="Microsoft.EventHub/namespaces/eventhubs" id="node-33">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="5360" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;asa-realtime-processing&lt;/b&gt;" type="Microsoft.StreamAnalytics/streamingjobs" id="node-34">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="5620" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rsv-central-backup&lt;/b&gt;" type="Microsoft.RecoveryServices/vaults" id="node-35">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/management_governance/Recovery_Services_Vaults.svg" parent="1" vertex="1">
+                        <mxGeometry x="8480" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;rsv-site-recovery&lt;/b&gt;" type="Microsoft.RecoveryServices/vaults" id="node-36">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/management_governance/Recovery_Services_Vaults.svg" parent="1" vertex="1">
+                        <mxGeometry x="9520" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;aks-ml-compute&lt;/b&gt;" type="Microsoft.ContainerService/managedClusters" id="node-37">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/containers/Kubernetes_Service.svg" parent="1" vertex="1">
+                        <mxGeometry x="680" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;acrmlopsprod&lt;/b&gt;" type="Microsoft.ContainerRegistry/registries" id="node-38">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/containers/Container_Registry.svg" parent="1" vertex="1">
+                        <mxGeometry x="940" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;aci-data-processor&lt;/b&gt;" type="Microsoft.ContainerInstance/containerGroups" id="node-39">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="5880" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;logic-alert-processor&lt;/b&gt;" type="Microsoft.Logic/workflows" id="node-40">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/app_services/Logic_App.svg" parent="1" vertex="1">
+                        <mxGeometry x="6140" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;apim-enterprise-gateway&lt;/b&gt;" type="Microsoft.ApiManagement/service" id="node-41">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/app_services/API_Management.svg" parent="1" vertex="1">
+                        <mxGeometry x="8740" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;sb-messaging-hub&lt;/b&gt;" type="Microsoft.ServiceBus/namespaces" id="node-42">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/messaging/Service_Bus.svg" parent="1" vertex="1">
+                        <mxGeometry x="6400" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;synw-analytics-platform&lt;/b&gt;" type="Microsoft.Synapse/workspaces" id="node-43">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="1200" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;adf-ml-pipeline&lt;/b&gt;" type="Microsoft.DataFactory/factories" id="node-44">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="1460" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;datalakemlprod&lt;/b&gt;" type="Microsoft.Storage/storageAccounts" id="node-45">
+                    <mxCell style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts.svg" parent="1" vertex="1">
+                        <mxGeometry x="1720" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;purview-data-catalog&lt;/b&gt;" type="Microsoft.Purview/accounts" id="node-46">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="1980" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;sentinel-siem-solution&lt;/b&gt;" type="Microsoft.SecurityInsights/solutions" id="node-47">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="9000" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;defender-for-servers&lt;/b&gt;" type="Microsoft.Security/pricings" id="node-48">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="9260" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;bastion-hub-jump&lt;/b&gt;" type="Microsoft.Network/bastionHosts" id="node-49">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="8220" y="1000" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;dt-smart-building&lt;/b&gt;" type="Microsoft.DigitalTwins/digitalTwinsInstances" id="node-50">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="4320" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;maps-fleet-tracking&lt;/b&gt;" type="Microsoft.Maps/accounts" id="node-51">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="4580" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;batch-ml-training&lt;/b&gt;" type="Microsoft.Batch/batchAccounts" id="node-52">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="2240" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;hpc-ml-cache&lt;/b&gt;" type="Microsoft.StorageCache/caches" id="node-53">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="2500" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <object label="&lt;b&gt;anf-high-performance&lt;/b&gt;" type="Microsoft.NetApp/netAppAccounts" id="node-54">
+                    <mxCell style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                        <mxGeometry x="2760" y="1150" width="80" height="80" as="geometry"/>
+                    </mxCell>
+                </object>
+                <mxCell id="edge-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-1" target="node-0" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-2" target="node-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-3" target="node-2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-4" target="node-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-5" target="node-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-6" target="node-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-7" target="node-4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-8" target="node-4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-9" target="node-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-10" target="node-5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-11" target="node-5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-12" target="node-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-13" target="node-7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-14" target="node-7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-15" target="node-8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-16" target="node-8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-17" target="node-9" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-18" target="node-11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-19" target="node-11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-20" target="node-10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-22" target="node-10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-23" target="node-10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-24" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-25" target="node-14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-29" target="node-15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-32" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-35" target="node-12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-21" target="node-10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-26" target="node-14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-27" target="node-14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-28" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-30" target="node-15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-31" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-33" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-34" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-36" target="node-17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-37" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-38" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-39" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-40" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-41" target="node-12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-42" target="node-16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-43" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-44" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-45" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-46" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-47" target="node-12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-48" target="node-12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-48" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-49" target="node-11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-49" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-50" target="node-15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-50" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-51" target="node-15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-51" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-52" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-53" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-54" target="node-13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-33" target="node-32" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="5400" y="1370"/>
+                            <mxPoint x="4900" y="1370"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-32" target="node-29" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-56" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-34" target="node-33" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-57" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-31" target="node-32" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-58" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-24" target="node-45" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-59" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-37" target="node-38" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-28" target="node-45" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-44" target="node-43" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-62" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-50" target="node-29" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-46" target="node-45" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-41" target="node-25" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

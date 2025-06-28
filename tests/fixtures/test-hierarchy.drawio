@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net" agent="python-script">
+  <diagram id="main-diagram" name="Azure Infrastructure">
+    <mxGraphModel dx="2500" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="node-0" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="290" y="100" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;Root Management Group&lt;/b&gt;" as="value" type="Microsoft.Management/managementGroups"/>
+        </mxCell>
+        <mxCell id="node-1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+          <mxGeometry x="290" y="250" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;Production Subscription&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions"/>
+        </mxCell>
+        <mxCell id="node-2" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="290" y="400" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;rg-webapp&lt;/b&gt;" as="value" type="Microsoft.Resources/subscriptions/resourceGroups"/>
+        </mxCell>
+        <mxCell id="node-3" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/App_Services.svg" parent="1" vertex="1">
+          <mxGeometry x="160" y="550" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;myapp&lt;/b&gt;" as="value" type="Microsoft.Web/sites"/>
+        </mxCell>
+        <mxCell id="node-4" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts.svg" parent="1" vertex="1">
+          <mxGeometry x="420" y="550" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;mystorage&lt;/b&gt;" as="value" type="Microsoft.Storage/storageAccounts"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

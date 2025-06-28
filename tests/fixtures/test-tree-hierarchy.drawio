@@ -1,0 +1,122 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net" agent="python-script">
+  <diagram id="main-diagram" name="Azure Infrastructure">
+    <mxGraphModel dx="2500" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="node-0" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1200" y="400" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;contoso-root&lt;/b&gt;" as="value" type="microsoft.management/managementgroups"/>
+        </mxCell>
+        <mxCell id="node-1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1200" y="250" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;contoso-platform&lt;/b&gt;" as="value" type="microsoft.management/managementgroups"/>
+        </mxCell>
+        <mxCell id="node-2" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Management_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1200" y="100" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;contoso-connectivity&lt;/b&gt;" as="value" type="microsoft.management/managementgroups"/>
+        </mxCell>
+        <mxCell id="node-3" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Subscriptions.svg" parent="1" vertex="1">
+          <mxGeometry x="1200" y="550" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;contoso-prod-001&lt;/b&gt;" as="value" type="microsoft.resources/subscriptions"/>
+        </mxCell>
+        <mxCell id="node-4" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="810" y="700" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;rg-network-prd-we-001&lt;/b&gt;" as="value" type="microsoft.resources/subscriptions/resourcegroups"/>
+        </mxCell>
+        <mxCell id="node-5" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1980" y="700" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;rg-compute-prd-we-001&lt;/b&gt;" as="value" type="microsoft.resources/subscriptions/resourcegroups"/>
+        </mxCell>
+        <mxCell id="node-6" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Virtual_Networks.svg" parent="1" vertex="1">
+          <mxGeometry x="160" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vnet-hub-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/virtualnetworks"/>
+        </mxCell>
+        <mxCell id="node-7" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="1" vertex="1">
+          <mxGeometry x="420" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;snet-gateway-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/virtualnetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-8" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg" parent="1" vertex="1">
+          <mxGeometry x="680" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;snet-compute-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/virtualnetworks/subnets"/>
+        </mxCell>
+        <mxCell id="node-9" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Public_IP_Addresses.svg" parent="1" vertex="1">
+          <mxGeometry x="940" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;pip-gateway-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/publicipaddresses"/>
+        </mxCell>
+        <mxCell id="node-10" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Network_Security_Groups.svg" parent="1" vertex="1">
+          <mxGeometry x="1200" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;nsg-compute-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/networksecuritygroups"/>
+        </mxCell>
+        <mxCell id="node-11" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Application_Gateway.svg" parent="1" vertex="1">
+          <mxGeometry x="1460" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;agw-web-prd-we-001&lt;/b&gt;" as="value" type="microsoft.network/applicationgateways"/>
+        </mxCell>
+        <mxCell id="node-12" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg" parent="1" vertex="1">
+          <mxGeometry x="1720" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;vm-web-prd-we-001&lt;/b&gt;" as="value" type="microsoft.compute/virtualmachines"/>
+        </mxCell>
+        <mxCell id="node-13" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/App_Services.svg" parent="1" vertex="1">
+          <mxGeometry x="1980" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;app-web-prd-we-001&lt;/b&gt;" as="value" type="microsoft.web/sites"/>
+        </mxCell>
+        <mxCell id="node-14" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts.svg" parent="1" vertex="1">
+          <mxGeometry x="2240" y="850" width="80" height="80" as="geometry"/>
+          <object label="&lt;b&gt;stcontosoprdwe001&lt;/b&gt;" as="value" type="microsoft.storage/storageaccounts"/>
+        </mxCell>
+        <mxCell id="edge-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-0" target="node-1" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-1" target="node-2" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-3" target="node-0" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-4" target="node-3" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-5" target="node-3" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-6" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-7" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-8" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-9" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-10" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-11" target="node-4" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-12" target="node-5" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-13" target="node-5" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;" parent="1" source="node-14" target="node-5" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-2" target="node-3" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-6" target="node-7" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;" parent="1" source="node-6" target="node-8" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
