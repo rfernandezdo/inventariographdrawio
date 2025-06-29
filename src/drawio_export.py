@@ -1136,43 +1136,19 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
             if child_id in item_id_to_idx and parent_id in item_id_to_idx:
                 edges_to_create.append((child_id, parent_id))  # De hijo a padre para mostrar jerarquía
     else:
-        # Para otros modos, usar las dependencias originales
-        edges_to_create = dependencies
-    
-    # Agregar también las dependencias no jerárquicas como líneas punteadas en modo infrastructure
-    if diagram_mode == 'infrastructure':
-        print(f"🔗 Agregando {len(dependencies)} dependencias adicionales como relaciones")
-        # Filtrar dependencias que no son jerárquicas para mostrarlas como relaciones
-        hierarchical_pairs = set(tree_edges) if tree_edges else set()
-        
-        for src_id, tgt_id in dependencies:
-            dependency_pair = (src_id.lower(), tgt_id.lower())
-            reverse_pair = (tgt_id.lower(), src_id.lower())
+        # Para otros modos (components, network), determinar las dependencias según las opciones
+        if diagram_mode == 'network' and no_hierarchy_edges:
+            # En modo network con filtrado de enlaces jerárquicos
+            print(f"🔗 Filtrando enlaces jerárquicos (Resource Groups y VNet-Subnet) de {len(dependencies)} dependencias")
             
-            # Solo agregar si no es una dependencia jerárquica
-            if dependency_pair not in hierarchical_pairs and reverse_pair not in hierarchical_pairs:
-                edges_to_create.append((src_id, tgt_id))
-    elif diagram_mode == 'network':
-        if no_hierarchy_edges:
-            # En modo network con enlaces de RG deshabilitados, excluir solo enlaces RG → recursos
-            print(f"🔗 Excluyendo TODOS los enlaces que involucren Resource Groups y enlaces VNet-Subnet")
+            # Crear diccionario de mapeo ID → tipo una sola vez para eficiencia
+            id_to_type = {item['id'].lower(): item.get('type', '').lower() for item in items}
+            
             for src_id, tgt_id in dependencies:
-                # Buscar los items correspondientes para determinar sus tipos
-                source_item = None
-                target_item = None
-                for item in items:
-                    if item['id'].lower() == src_id.lower():
-                        source_item = item
-                        break
-                for item in items:
-                    if item['id'].lower() == tgt_id.lower():
-                        target_item = item
-                        break
+                source_type = id_to_type.get(src_id.lower(), '')
+                target_type = id_to_type.get(tgt_id.lower(), '')
                 
-                if source_item and target_item:
-                    source_type = source_item.get('type', '').lower()
-                    target_type = target_item.get('type', '').lower()
-                    
+                if source_type and target_type:
                     # Excluir CUALQUIER enlace que tenga un Resource Group como origen o destino
                     has_rg_involvement = (
                         source_type == 'microsoft.resources/subscriptions/resourcegroups' or 
@@ -1190,10 +1166,25 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
                     # Incluir todos los enlaces EXCEPTO aquellos que involucren Resource Groups o VNet-Subnet
                     if not has_rg_involvement and not is_vnet_subnet_link:
                         edges_to_create.append((src_id, tgt_id))
+            
+            print(f"🔗 Conservando {len(edges_to_create)} enlaces de dependencias de red")
         else:
-            # En modo network sin restricciones, agregar todas las dependencias
-            print(f"🔗 Agregando {len(dependencies)} dependencias de red")
-            edges_to_create.extend(dependencies)
+            # Para otros modos sin restricciones, usar las dependencias originales
+            edges_to_create = dependencies
+    
+    # Agregar también las dependencias no jerárquicas como líneas punteadas en modo infrastructure
+    if diagram_mode == 'infrastructure':
+        print(f"🔗 Agregando {len(dependencies)} dependencias adicionales como relaciones")
+        # Filtrar dependencias que no son jerárquicas para mostrarlas como relaciones
+        hierarchical_pairs = set(tree_edges) if tree_edges else set()
+        
+        for src_id, tgt_id in dependencies:
+            dependency_pair = (src_id.lower(), tgt_id.lower())
+            reverse_pair = (tgt_id.lower(), src_id.lower())
+            
+            # Solo agregar si no es una dependencia jerárquica
+            if dependency_pair not in hierarchical_pairs and reverse_pair not in hierarchical_pairs:
+                edges_to_create.append((src_id, tgt_id))
     
     edge_counter = 0
     for source_id, target_id in edges_to_create:

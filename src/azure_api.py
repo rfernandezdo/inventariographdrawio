@@ -283,6 +283,8 @@ def find_dependencies(all_items):
         source_id_lower = item['id'].lower()
         item_type_lower = item.get('type', '').lower()
         parent_id = None
+        
+        # Handle hierarchical dependencies
         if item_type_lower == 'microsoft.management/managementgroups':
             mg_ancestors = item.get('properties', {}).get('details', {}).get('managementGroupAncestorsChain', [])
             if isinstance(mg_ancestors, list) and len(mg_ancestors) > 0:
@@ -314,15 +316,23 @@ def find_dependencies(all_items):
             parent_id = f"/subscriptions/{item['subscriptionId']}/resourcegroups/{item['resourceGroup']}".lower()
         elif item_type_lower == 'microsoft.network/virtualnetworks/subnets':
             parent_id = item.get('vnetId', '').lower()
+        
         if parent_id and parent_id in all_item_ids:
             dependencies.add((source_id_lower, parent_id))
+        
+        # Track subnet dependencies for this specific item to avoid VNet redundancy
+        subnet_dependencies_added = set()
+        
         def scan_properties(props):
+            nonlocal subnet_dependencies_added
+            
             if isinstance(props, dict):
                 for k, value in props.items():
                     if isinstance(value, str) and '/subnets/' in value.lower():
                         subnet_id = value.lower()
                         if subnet_id in all_item_ids and subnet_id != source_id_lower:
                             dependencies.add((source_id_lower, subnet_id))
+                            subnet_dependencies_added.add(subnet_id)
                             continue
                     if k.lower() == 'userassignedidentities' and isinstance(value, dict):
                         for mi_id in value.keys():
@@ -331,12 +341,27 @@ def find_dependencies(all_items):
                                 dependencies.add((source_id_lower, mi_id_lower))
                     scan_properties(value)
             elif isinstance(props, list):
-                for element in props: scan_properties(element)
+                for element in props: 
+                    scan_properties(element)
             elif isinstance(props, str):
                 if '/subnets/' in props.lower() and props.lower() in all_item_ids and props.lower() != source_id_lower:
                     dependencies.add((source_id_lower, props.lower()))
+                    subnet_dependencies_added.add(props.lower())
                 elif props.lower() in all_item_ids and props.lower() != source_id_lower:
-                    dependencies.add((source_id_lower, props.lower()))
+                    # Only add VNet dependencies if no subnet dependency exists for this VNet
+                    if '/virtualnetworks/' in props.lower() and not '/subnets/' in props.lower():
+                        # Check if we already have a subnet dependency from this VNet
+                        vnet_id = props.lower()
+                        has_subnet_from_this_vnet = any(
+                            subnet_id.startswith(vnet_id + '/subnets/') 
+                            for subnet_id in subnet_dependencies_added
+                        )
+                        if not has_subnet_from_this_vnet:
+                            dependencies.add((source_id_lower, props.lower()))
+                    elif '/virtualnetworks/' not in props.lower():
+                        # For non-VNet resources, add dependency normally
+                        dependencies.add((source_id_lower, props.lower()))
+        
         scan_properties(item)
     print(f"INFO: Se han encontrado {len(dependencies)} relaciones de dependencia.")
     return list(dependencies)
