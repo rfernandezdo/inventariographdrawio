@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--diagram-mode', choices=['infrastructure', 'components', 'network'], default='infrastructure',
                        help='Tipo de diagrama a generar: infrastructure (jerarquía completa), components (agrupado por función), network (solo recursos de red)')
     parser.add_argument('--no-embed-data', action='store_true', help='No incrustar todos los datos, solo el campo type')
+    parser.add_argument('--no-hierarchy-edges', action='store_true', help='En modo network, ocultar enlaces hacia/desde Resource Groups y enlaces VNet-Subnet')
     parser.add_argument('--include-ids', nargs='+', help='IDs de management group, suscripción o resource group a incluir (y sus descendientes)')
     parser.add_argument('--exclude-ids', nargs='+', help='IDs de management group, suscripción o resource group a excluir (y sus descendientes)')
     
@@ -31,6 +32,12 @@ def main():
 
     if args.help:
         print_help_section()
+        print("\n=== OPCIONES DE DIAGRAMA ===")
+        print("--diagram-mode MODE  Tipo: infrastructure, components, network")
+        print("--no-embed-data      No incrustar datos completos")
+        print("--no-hierarchy-edges Sin enlaces hacia/desde Resource Groups ni VNet-Subnet (solo modo network)")
+        print("--include-ids IDS    Incluir solo ciertos recursos")
+        print("--exclude-ids IDS    Excluir ciertos recursos")
         print("\n=== OPCIONES DE CACHE Y ALMACENAMIENTO LOCAL ===")
         print("--no-cache           No usar cache, siempre consultar Azure")
         print("--force-refresh      Forzar actualización eliminando cache")
@@ -106,7 +113,8 @@ def main():
         azure_items, dependencies, 
         embed_data=not args.no_embed_data, 
         include_ids=args.include_ids,
-        diagram_mode=args.diagram_mode
+        diagram_mode=args.diagram_mode,
+        no_hierarchy_edges=args.no_hierarchy_edges
     )
     try:
         with open(output_file, "w", encoding='utf-8') as f:

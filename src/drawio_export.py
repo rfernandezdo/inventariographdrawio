@@ -53,6 +53,7 @@ AZURE_ICONS = {
     "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connections.svg",
     "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
     "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
+    "microsoft.network/privatednszones": "img/lib/azure2/networking/DNS_Zones.svg",
     "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",
     "microsoft.resources/deploymentscripts": "img/lib/azure2/general/Deployment_Scripts.svg",
     "microsoft.resources/resources": "img/lib/azure2/general/Resources.svg",
@@ -508,19 +509,44 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
         'vnets': {},         # Virtual Networks organizadas por región
         'connectivity': [],  # VPN Gateways, ExpressRoute, Connections
         'security': [],      # NSGs, Azure Firewall, Key Vault
-        'management': []     # Management Groups, Subscriptions (solo como contexto mínimo)
+        'management': [],    # Management Groups, Subscriptions (solo como contexto mínimo)
+        'resource_groups': {}  # Resource Groups para organizar recursos
     }
     
     # Mapeo de subnets y sus recursos
     subnet_resources = {}
     vnet_to_region = {}
+    resource_group_map = {}  # Mapa de RG ID -> info del RG
     
     print("🔍 Analizando recursos para diagrama de red...")
+
+    # 0. Primero identificar Resource Groups para crear la jerarquía
+    for i, item in enumerate(items):
+        resource_type = (item.get('type') or '').lower()
+        
+        if resource_type == 'microsoft.resources/subscriptions/resourcegroups':
+            rg_id = item['id'].lower()
+            location = (item.get('location') or 'unknown').lower()
+            resource_group_map[rg_id] = {
+                'index': i,
+                'item': item,
+                'location': location,
+                'resources': []  # Recursos que pertenecen a este RG
+            }
+            
+            # Organizar RGs por región
+            if location not in network_structure['resource_groups']:
+                network_structure['resource_groups'][location] = {}
+            network_structure['resource_groups'][location][rg_id] = resource_group_map[rg_id]
 
     # 1. Identificar VNets, subnets y regiones
     for i, item in enumerate(items):
         resource_type = (item.get('type') or '').lower()
         location = (item.get('location') or 'unknown').lower()
+        
+        # Skip resource groups ya procesados
+        if resource_type == 'microsoft.resources/subscriptions/resourcegroups':
+            continue
         
         if resource_type == 'microsoft.network/virtualnetworks':
             vnet_id = item['id'].lower()
@@ -531,6 +557,11 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                 'vnet': (i, item), 
                 'subnets': {}
             }
+            
+            # Asignar VNet a su Resource Group
+            vnet_rg_id = '/'.join(vnet_id.split('/')[:5])  # Extraer RG ID del VNet ID
+            if vnet_rg_id in resource_group_map:
+                resource_group_map[vnet_rg_id]['resources'].append((i, item))
             
         elif resource_type == 'microsoft.network/virtualnetworks/subnets':
             subnet_id = item['id'].lower()
@@ -553,14 +584,25 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                     network_structure['vnets'][region][vnet_id]['subnets'][subnet_type] = []
                 network_structure['vnets'][region][vnet_id]['subnets'][subnet_type].append((i, item))
                 subnet_resources[subnet_id] = []
+                
+            # Asignar subnet a su Resource Group
+            subnet_rg_id = '/'.join(subnet_id.split('/')[:5])  # Extraer RG ID del subnet ID
+            if subnet_rg_id in resource_group_map:
+                resource_group_map[subnet_rg_id]['resources'].append((i, item))
 
     # 2. Clasificar recursos por función de red
     for i, item in enumerate(items):
         resource_type = (item.get('type') or '').lower()
         
         # Skip ya procesados
-        if resource_type in ['microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets']:
+        if resource_type in ['microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets', 'microsoft.resources/subscriptions/resourcegroups']:
             continue
+            
+        # Asignar recurso a su Resource Group
+        resource_id = item['id'].lower()
+        resource_rg_id = '/'.join(resource_id.split('/')[:5])  # Extraer RG ID
+        if resource_rg_id in resource_group_map:
+            resource_group_map[resource_rg_id]['resources'].append((i, item))
             
         # Determinar subnet de destino si aplica
         resource_subnet = None
@@ -572,6 +614,27 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
             props.get('virtualNetworkConfiguration', {}).get('subnetResourceId'),
             props.get('ipConfigurations', [{}])[0].get('subnet', {}).get('id') if props.get('ipConfigurations') else None
         ]
+        
+        # Para VMs, intentar inferir subnet desde network interfaces
+        if resource_type == 'microsoft.compute/virtualmachines':
+            network_profile = props.get('networkProfile', {})
+            network_interfaces = network_profile.get('networkInterfaces', [])
+            if network_interfaces:
+                # Tomar la primera NIC para inferir subnet
+                first_nic_id = network_interfaces[0].get('id', '')
+                if first_nic_id:
+                    # Inferir que la NIC probablemente está en la subnet 'compute' del mismo RG
+                    # Esto es una heurística basada en naming conventions comunes
+                    parts = resource_id.split('/')
+                    if len(parts) >= 5:
+                        subscription_id = parts[2]
+                        rg_name = parts[4]
+                        # Buscar subnets que contengan 'compute' en el mismo RG
+                        for subnet_id in subnet_resources.keys():
+                            if subscription_id in subnet_id and rg_name in subnet_id and 'compute' in subnet_id.lower():
+                                resource_subnet = subnet_id
+                                print(f"🔗 VM {item.get('name')} asociada a subnet {resource_subnet} por heurística")
+                                break
         
         for ref in subnet_refs:
             if ref:
@@ -587,9 +650,12 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
         # Asignar a subnet si encontramos una
         if resource_subnet and resource_subnet in subnet_resources:
             subnet_resources[resource_subnet].append((i, item))
+            # Asignar subnet_id al item para usarlo después en el layout
+            item['subnet_id'] = resource_subnet
             continue
 
-        # Clasificación por función de red (recursos no asignados a subnets específicas)
+        # Para recursos NO asignados a subnets, clasificar por función pero MANTENER asociación con RG
+        # (Los recursos seguirán perteneciendo a su RG, solo se usan estas categorías para layout adicional)
         if any(t in resource_type for t in ['publicip', 'dns', 'trafficmanager', 'frontdoor']):
             network_structure['internet'].append((i, item))
         elif any(t in resource_type for t in ['applicationgateway', 'loadbalancer', 'firewall']):
@@ -600,266 +666,398 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
             network_structure['security'].append((i, item))
         elif resource_type in ['microsoft.management/managementgroups', 'microsoft.resources/subscriptions']:
             network_structure['management'].append((i, item))
+        # NOTA: Todos los recursos siguen asignados a sus RGs, estas clasificaciones son solo para layout adicional
 
-    # --- LAYOUT MEJORADO PARA ARQUITECTURA DE RED ---
+    # --- LAYOUT MEJORADO PARA ARQUITECTURA DE RED JERÁRQUICA ---
     
     # Configuración de layout
     margin = 80
-    internet_height = 120
-    edge_height = 150
-    vnet_padding = 40
-    subnet_padding = 25
-    region_spacing = 200
-    tier_spacing = 180
+    subscription_padding = 40
+    rg_padding = 50  # Aumentado de 30 a 50px para mejor separación de los RGs del borde del contenedor
+    vnet_padding = 20
+    subnet_padding = 15
     
     current_y = margin
     
-    # 1. CAPA INTERNET (Internet/External) - Top
-    print("📡 Posicionando capa Internet...")
-    if network_structure['internet']:
-        internet_group_id = "group_internet"
-        internet_width = max(len(network_structure['internet']) * 200, 800)
-        
-        group_info.append({
-            'id': internet_group_id,
-            'parent_id': '1',
-            'type': 'internet_zone',
-            'x': margin,
-            'y': current_y,
-            'width': internet_width,
-            'height': internet_height,
-            'label': '🌐 Internet / External Services',
-            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
-        })
-        
-        x_offset = margin + 50
-        for idx, item in network_structure['internet']:
-            node_positions[idx] = (x_offset, current_y + internet_height//2 - 25)
-            resource_to_parent_id[idx] = internet_group_id
-            x_offset += 150
-            
-        current_y += internet_height + 30
-
-    # 2. CAPA EDGE (Edge/Perimeter) - Application Gateways, Load Balancers
-    print("🛡️ Posicionando capa Edge...")
-    if network_structure['edge']:
-        edge_group_id = "group_edge"
-        edge_width = max(len(network_structure['edge']) * 200, 800)
-        
-        group_info.append({
-            'id': edge_group_id,
-            'parent_id': '1',
-            'type': 'edge_zone',
-            'x': margin,
-            'y': current_y,
-            'width': edge_width,
-            'height': edge_height,
-            'label': '🛡️ Edge / Perimeter Security',
-            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#ef6c00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
-        })
-        
-        x_offset = margin + 50
-        for idx, item in network_structure['edge']:
-            node_positions[idx] = (x_offset, current_y + edge_height//2 - 25)
-            resource_to_parent_id[idx] = edge_group_id
-            x_offset += 150
-            
-        current_y += edge_height + 50
-
-    # 3. CAPA VNETS (Virtual Networks por región) - Core
-    print("🏗️ Posicionando VNets por región...")
-    vnet_start_y = current_y
-    max_region_width = 0
-    region_counter = 0
+    # 1. MANAGEMENT GROUPS & SUBSCRIPTIONS (Panel lateral como referencia)
+    print("📋 Posicionando Management Groups y Subscriptions...")
+    mgmt_x = 50
+    mgmt_y = margin
+    mgmt_width = 300
     
-    for region, vnets in network_structure['vnets'].items():
-        if not vnets:
+    mgmt_security = network_structure['security'] + network_structure['management']
+    if mgmt_security:
+        # Calcular altura con mejor espaciado (100px por elemento + margen)
+        mgmt_height = max(900, len(mgmt_security) * 100 + 150)  # Mínimo 900px, espaciado de 100px
+        
+        mgmt_group_id = "group_management"
+        group_info.append({
+            'id': mgmt_group_id,
+            'parent_id': '1',
+            'type': 'management_zone',
+            'x': mgmt_x,
+            'y': mgmt_y,
+            'width': mgmt_width,
+            'height': mgmt_height,
+            'label': '📋 Management & Governance',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
+        })
+        
+        # Centrar horizontalmente los elementos en el contenedor (300px de ancho, iconos de 60px)
+        # Posición X = (300 - 60) / 2 = 120
+        center_x = (mgmt_width - 60) // 2  # 120px para centrar iconos de 60px en contenedor de 300px
+        y_offset = 60  # Inicio con más margen superior
+        
+        for idx, item in mgmt_security:
+            node_positions[idx] = (center_x, y_offset)
+            resource_to_parent_id[idx] = mgmt_group_id
+            y_offset += 100  # Separación vertical mejorada de 100px
+    
+    # 2. CONTAINERS POR SUBSCRIPTION
+    print("🏢 Creando containers por Subscription...")
+    subscription_start_x = mgmt_x + mgmt_width + 150  # Aumentado de 100 a 150px de separación
+    
+    # Obtener todas las subscriptions únicas
+    subscriptions = {}
+    for i, item in enumerate(items):
+        if item.get('type', '').lower() == 'microsoft.resources/subscriptions':
+            sub_id = item['id'].lower()
+            subscriptions[sub_id] = {'index': i, 'item': item, 'resource_groups': {}}
+    
+    # Si no hay subscriptions explícitas, usar la subscription de los RGs
+    if not subscriptions:
+        # Crear subscription implícita basada en los RGs
+        for rg_id, rg_data in resource_group_map.items():
+            # Extraer subscription ID del RG ID
+            sub_id = '/'.join(rg_id.split('/')[:3])  # /subscriptions/{sub-id}
+            if sub_id not in subscriptions:
+                subscriptions[sub_id] = {
+                    'index': None,  # No hay item explícito
+                    'item': {'id': sub_id, 'name': sub_id.split('/')[-1][:8] + '...'},
+                    'resource_groups': {}
+                }
+            subscriptions[sub_id]['resource_groups'][rg_id] = rg_data
+    else:
+        # Asignar RGs a subscriptions existentes
+        for rg_id, rg_data in resource_group_map.items():
+            sub_id = '/'.join(rg_id.split('/')[:3])  # /subscriptions/{sub-id}
+            if sub_id in subscriptions:
+                subscriptions[sub_id]['resource_groups'][rg_id] = rg_data
+    
+    global_sub_counter = 0
+    global_rg_counter = 0
+    global_vnet_counter = 0
+    global_subnet_counter = 0
+    
+    for sub_id, sub_data in subscriptions.items():
+        if not sub_data['resource_groups']:  # Skip subs sin RGs
             continue
             
-        print(f"   📍 Región: {region}")
-        region_group_id = f"group_region_{region_counter}"
-        region_counter += 1
+        print(f"   📁 Subscription: {sub_data['item'].get('name', 'N/A')}")
         
-        # Calcular dimensiones de la región
-        vnet_count = len(vnets)
-        vnets_per_row = min(2, vnet_count)  # Máximo 2 VNets por fila
-        vnet_rows = (vnet_count + vnets_per_row - 1) // vnets_per_row
+        # Calcular dimensiones del container de subscription dinámicamente
+        rg_count = len(sub_data['resource_groups'])
+        rgs_per_row = 2  # 2 RGs por fila
+        rg_rows = (rg_count + rgs_per_row - 1) // rgs_per_row
         
-        vnet_width = 600
-        vnet_height_base = 300
-        region_width = vnets_per_row * vnet_width + (vnets_per_row + 1) * vnet_padding
-        max_region_width = max(max_region_width, region_width)
+        # Calcular dimensiones basadas en el contenido real de los RGs
+        max_rg_width = 800   # Ancho máximo por RG (mucho más generoso)
+        max_rg_height = 900  # Altura máxima por RG (mucho más generoso)
         
-        # Crear grupo de región
-        region_y = vnet_start_y
-        region_height = vnet_rows * (vnet_height_base + 50) + (vnet_rows + 1) * vnet_padding
+        sub_width = rgs_per_row * max_rg_width + (rgs_per_row + 1) * rg_padding
+        sub_height = rg_rows * max_rg_height + (rg_rows + 1) * rg_padding + 60  # +60 para header
         
+        sub_group_id = f"group_subscription_{global_sub_counter}"
+        global_sub_counter += 1
+        
+        sub_x = subscription_start_x
+        sub_y = current_y
+        
+        # Crear container de subscription
         group_info.append({
-            'id': region_group_id,
+            'id': sub_group_id,
             'parent_id': '1',
-            'type': 'region_container',
-            'x': margin,
-            'y': region_y,
-            'width': region_width,
-            'height': region_height,
-            'label': f'🌍 Region: {region.title()}',
-            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
+            'type': 'subscription_container',
+            'x': sub_x,
+            'y': sub_y,
+            'width': sub_width,
+            'height': sub_height,
+            'label': f'🏢 Subscription: {sub_data["item"].get("name", "N/A")}',
+            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
         })
         
-        # Posicionar VNets dentro de la región
-        vnet_counter = 0
-        for vnet_row in range(vnet_rows):
-            row_vnets = list(vnets.items())[vnet_row * vnets_per_row:(vnet_row + 1) * vnets_per_row]
+        # Posicionar subscription item si existe
+        if sub_data['index'] is not None:
+            node_positions[sub_data['index']] = (20, 25)
+            resource_to_parent_id[sub_data['index']] = sub_group_id
+        
+        # 3. CONTAINERS POR RESOURCE GROUP dentro de la subscription
+        print(f"      📦 Creando {len(sub_data['resource_groups'])} Resource Groups...")
+        
+        rg_counter = 0
+        current_row_height = 0  # Altura acumulada de la fila actual
+        row_rg_heights = []  # Lista para almacenar las alturas de RGs en la fila actual
+        
+        for rg_id, rg_data in sub_data['resource_groups'].items():
+            rg_row = rg_counter // rgs_per_row
+            rg_col = rg_counter % rgs_per_row
             
-            for vnet_col, (vnet_id, vnet_data) in enumerate(row_vnets):
-                vnet_idx, vnet_item = vnet_data['vnet']
-                vnet_group_id = f"group_vnet_{vnet_counter}"
-                vnet_counter += 1
+            # Si es el primer RG de una nueva fila, calcular la posición Y
+            if rg_col == 0 and rg_counter > 0:
+                # Usar la altura máxima de la fila anterior
+                max_height_prev_row = max(row_rg_heights) if row_rg_heights else max_rg_height
+                current_row_height += max_height_prev_row + rg_padding
+                row_rg_heights = []  # Reset para la nueva fila
+            
+            rg_x = rg_padding + rg_col * (max_rg_width + rg_padding)
+            rg_y = 60 + rg_padding + current_row_height  # +60 para header de subscription
+            
+            rg_group_id = f"group_rg_{global_rg_counter}"
+            global_rg_counter += 1
+            rg_counter += 1
+            
+            # Analizar recursos del RG para calcular layout interno
+            vnet_resources = []
+            subnet_resources_by_vnet = {}
+            standalone_resources = []
+            
+            for res_idx, res_item in rg_data['resources']:
+                res_type = res_item.get('type', '').lower()
                 
-                vnet_x = margin + vnet_padding + vnet_col * (vnet_width + vnet_padding)
-                vnet_y = region_y + vnet_padding + 40 + vnet_row * (vnet_height_base + 50)
+                if res_type == 'microsoft.network/virtualnetworks':
+                    vnet_resources.append((res_idx, res_item))
+                    vnet_id = res_item['id'].lower()
+                    subnet_resources_by_vnet[vnet_id] = []
+                elif res_type == 'microsoft.network/virtualnetworks/subnets':
+                    # Encontrar VNet padre
+                    subnet_id = res_item['id'].lower()
+                    vnet_id = '/'.join(subnet_id.split('/')[:-2])
+                    if vnet_id not in subnet_resources_by_vnet:
+                        subnet_resources_by_vnet[vnet_id] = []
+                    subnet_resources_by_vnet[vnet_id].append((res_idx, res_item))
+                else:
+                    # Verificar si está asociado a una subnet
+                    associated_to_subnet = False
+                    for subnet_id, subnet_res_list in subnet_resources.items():
+                        if (res_idx, res_item) in subnet_res_list:
+                            associated_to_subnet = True
+                            break
+                    
+                    if not associated_to_subnet:
+                        standalone_resources.append((res_idx, res_item))
+            
+            # Calcular dimensiones dinámicas del RG basadas en contenido
+            rg_min_width = 400
+            rg_min_height = 300  # Altura mínima más razonable para mostrar recursos
+            rg_padding_internal = 20
+            
+            # Espacio para header del RG (nombre + icono)
+            rg_content_height = 70  # Header space
+            rg_content_width = rg_min_width
+            
+            # Calcular espacio para VNets
+            vnet_height_total = 0
+            if vnet_resources:
+                for vnet_idx, vnet_item in vnet_resources:
+                    vnet_id = vnet_item['id'].lower()
+                    vnet_subnets = subnet_resources_by_vnet.get(vnet_id, [])
+                    
+                    # Altura VNet = header + (número de subnets * altura_subnet) + padding muy generoso
+                    vnet_height = 120 + len(vnet_subnets) * 220 + 50  # Mucho más espacio: 220px por subnet + padding generoso
+                    vnet_height_total += vnet_height + 60  # Mucho más espacio entre VNets
+                    
+                    # Ancho VNet (calculado dinámicamente basado en las subnets)
+                    max_subnet_width_in_vnet = 0
+                    for subnet_id in vnet_subnets:
+                        subnet_resources_filtered = [(r_idx, r) for r_idx, r in rg_data['resources'] if r.get('subnet_id') == subnet_id]
+                        resource_count = len(subnet_resources_filtered)
+                        needed_subnet_width = max(400, 200 + resource_count * 120)
+                        max_subnet_width_in_vnet = max(max_subnet_width_in_vnet, needed_subnet_width)
+                    
+                    # VNet debe ser al menos 120px más ancha que la subnet más grande
+                    vnet_width_needed = max(600, max_subnet_width_in_vnet + 120)
+                    rg_content_width = max(rg_content_width, vnet_width_needed + 80)  # +80px para margen en RG
                 
-                # Calcular altura dinámica basada en subnets
-                subnet_types = vnet_data['subnets']
-                subnet_tiers = ['public', 'application', 'private', 'data']  # Orden lógico de tiers
+                rg_content_height += vnet_height_total
+            
+            # Calcular espacio para recursos standalone con mejor distribución
+            if standalone_resources:
+                # Primero calculamos un ancho tentativo basado en el contenido
+                tentative_width = max(rg_min_width, min(len(standalone_resources) * 120 + 80, 700))
+                resources_per_row = max(1, min(3, (tentative_width - 80) // 120))  # 3 recursos máximo por fila
+                standalone_rows = (len(standalone_resources) + resources_per_row - 1) // resources_per_row
+                standalone_height = standalone_rows * 100 + 80  # 100px por fila + padding extra
+                rg_content_height += standalone_height
                 
-                tier_height = 80
-                vnet_actual_height = max(vnet_height_base, len([t for t in subnet_tiers if t in subnet_types]) * tier_height + 100)
+                # Ancho para recursos standalone 
+                standalone_width = min(len(standalone_resources), resources_per_row) * 120 + 80  # 120px por recurso + padding
+                rg_content_width = max(rg_content_width, standalone_width)
+            
+            # Si no hay contenido significativo, usar tamaño mínimo pero razonable
+            if not vnet_resources and len(standalone_resources) <= 1:
+                rg_content_height = max(rg_min_height, 250)  # Al menos 250px para RGs pequeños
+                rg_content_width = max(rg_min_width, 450)   # Al menos 450px de ancho
+            
+            # Aplicar tamaños mínimos y máximos más generosos
+            rg_final_width = max(rg_min_width, min(rg_content_width, 800))   # Máximo 800px (mucho más ancho)
+            rg_final_height = max(rg_min_height, min(rg_content_height, 900)) # Máximo 900px (mucho más alto)
+            
+            # Crear container de Resource Group con dimensiones dinámicas
+            group_info.append({
+                'id': rg_group_id,
+                'parent_id': sub_group_id,
+                'type': 'resource_group_container',
+                'x': rg_x,
+                'y': rg_y,
+                'width': rg_final_width,
+                'height': rg_final_height,
+                'label': f'📦 RG: {rg_data["item"].get("name", "N/A")}',
+                'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ff8f00;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'
+            })
+            
+            # Posicionar el Resource Group en sí
+            rg_idx = rg_data['index']
+            node_positions[rg_idx] = (15, 25)
+            resource_to_parent_id[rg_idx] = rg_group_id
+            
+            current_rg_y = 100  # Aumentado de 60 a 100px para evitar solapamiento con el icono del RG
+            
+            # 4. CONTAINERS DE VNETs dentro del RG (con mejor espaciado)
+            for vnet_idx, vnet_item in vnet_resources:
+                vnet_id = vnet_item['id'].lower()
+                vnet_subnets = subnet_resources_by_vnet.get(vnet_id, [])
                 
-                # Crear contenedor de VNet
+                vnet_group_id = f"group_vnet_{global_vnet_counter}"
+                global_vnet_counter += 1
+                
+                # Calcular dimensiones dinámicas de VNet con espaciado muy generoso
+                subnet_count = len(vnet_subnets)
+                # Calcular ancho necesario basado en las subnets que contendrá
+                max_subnet_width = 0
+                for subnet_id in vnet_subnets:
+                    subnet_resources_filtered = [(r_idx, r) for r_idx, r in rg_data['resources'] if r.get('subnet_id') == subnet_id]
+                    resource_count = len(subnet_resources_filtered)
+                    needed_subnet_width = max(400, 200 + resource_count * 120)
+                    max_subnet_width = max(max_subnet_width, needed_subnet_width)
+                
+                # VNet debe ser al menos 120px más ancha que la subnet más grande (60px margen a cada lado)
+                vnet_width = max(600, max_subnet_width + 120)
+                vnet_height = max(200, 120 + subnet_count * 220)  # Mucho más espacio: 220px por subnet + header
+                
+                # Crear container de VNet
                 group_info.append({
                     'id': vnet_group_id,
-                    'parent_id': region_group_id,
+                    'parent_id': rg_group_id,
                     'type': 'vnet_container',
-                    'x': vnet_x,
-                    'y': vnet_y,
+                    'x': 40,  # Aumentado de 20 a 40px para evitar solapamiento con el icono del RG
+                    'y': current_rg_y,
                     'width': vnet_width,
-                    'height': vnet_actual_height,
+                    'height': vnet_height,
                     'label': f'🏗️ VNet: {vnet_item.get("name", "N/A")}',
-                    'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#2e7d32;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
+                    'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#2e7d32;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'
                 })
                 
-                node_positions[vnet_idx] = (vnet_x + 20, vnet_y + 20)
+                # Posicionar VNet
+                node_positions[vnet_idx] = (15, 20)
                 resource_to_parent_id[vnet_idx] = vnet_group_id
                 
-                # Organizar subnets por tiers
-                current_tier_y = vnet_y + 50
-                subnet_counter = 0
-                
-                for tier_name in subnet_tiers:
-                    if tier_name not in subnet_types:
-                        continue
-                        
-                    tier_subnets = subnet_types[tier_name]
-                    if not tier_subnets:
-                        continue
+                # 5. CONTAINERS DE SUBNETs dentro de la VNet (con mejor espaciado)
+                subnet_y = 60  # Aumentado de 50 a 60px para más separación desde el header de la VNet
+                for subnet_idx, subnet_item in vnet_subnets:
+                    subnet_id = subnet_item['id'].lower()
+                    # Obtener recursos asociados con esta subnet específica (conservar tuplas completas)
+                    current_subnet_resources = [(r_idx, r) for r_idx, r in rg_data['resources'] if r.get('subnet_id') == subnet_id]
                     
-                    # Crear tier de subnet
-                    tier_group_id = f"group_tier_{tier_name}_{subnet_counter}"
-                    subnet_counter += 1
+                    subnet_group_id = f"group_subnet_{global_subnet_counter}"
+                    global_subnet_counter += 1
                     
-                    tier_colors = {
-                        'public': {'fill': '#ffebee', 'stroke': '#c62828'},
-                        'application': {'fill': '#e3f2fd', 'stroke': '#1565c0'},
-                        'private': {'fill': '#f1f8e9', 'stroke': '#388e3c'},
-                        'data': {'fill': '#fce4ec', 'stroke': '#ad1457'}
-                    }
+                    # Calcular dimensiones dinámicas de subnet con más espacio generoso
+                    resource_count = len(current_subnet_resources)
+                    # Ancho ajustado para caber dentro de VNet - máximo VNet_width - 120px de margen (60px cada lado)
+                    subnet_width = max(400, min(200 + resource_count * 120, vnet_width - 120))
+                    # Altura muy generosa para evitar cualquier solapamiento
+                    rows_needed = max(1, (resource_count + 1) // 2) if resource_count > 0 else 1  # 2 recursos por fila máximo
+                    subnet_height = max(160, 120 + rows_needed * 90)  # Altura aún más generosa
                     
-                    colors = tier_colors.get(tier_name, {'fill': '#f5f5f5', 'stroke': '#616161'})
-                    
+                    # Crear container de Subnet - centrado con 60px de margen mínimo a cada lado
+                    subnet_x = max(60, (vnet_width - subnet_width) // 2)  # Centrar pero con margen mínimo de 60px
                     group_info.append({
-                        'id': tier_group_id,
+                        'id': subnet_group_id,
                         'parent_id': vnet_group_id,
-                        'type': 'subnet_tier',
-                        'x': vnet_x + 20,
-                        'y': current_tier_y,
-                        'width': vnet_width - 40,
-                        'height': tier_height,
-                        'label': f'{tier_name.title()} Tier',
-                        'style': f'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor={colors["fill"]};strokeColor={colors["stroke"]};fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;'
+                        'type': 'subnet_container',
+                        'x': subnet_x,
+                        'y': subnet_y,
+                        'width': subnet_width,
+                        'height': subnet_height,
+                        'label': f'Subnet: {subnet_item.get("name", "N/A")}',
+                        'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=10;fontStyle=1;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;'
                     })
                     
-                    # Posicionar subnets y sus recursos
-                    subnet_x = vnet_x + 40
-                    for subnet_idx, subnet_item in tier_subnets:
-                        subnet_id = subnet_item['id'].lower()
-                        
-                        node_positions[subnet_idx] = (subnet_x, current_tier_y + 25)
-                        resource_to_parent_id[subnet_idx] = tier_group_id
-                        
-                        # Posicionar recursos dentro de la subnet
-                        resource_x = subnet_x + 100
-                        for res_idx, res_item in subnet_resources.get(subnet_id, []):
-                            node_positions[res_idx] = (resource_x, current_tier_y + 25)
-                            resource_to_parent_id[res_idx] = tier_group_id
-                            resource_x += 80
-                        
-                        subnet_x += max(200, len(subnet_resources.get(subnet_id, [])) * 80 + 120)
+                    # Posicionar Subnet
+                    node_positions[subnet_idx] = (10, 25)
+                    resource_to_parent_id[subnet_idx] = subnet_group_id
                     
-                    current_tier_y += tier_height + 10
+                    # Posicionar recursos asociados a la subnet con espaciado muy generoso
+                    resource_x = 80   # Mucho más margen desde el borde izquierdo para evitar solapamiento con icono subnet
+                    resource_y = 70   # Más abajo para evitar solapamiento con título
+                    resources_per_row = max(1, min(2, (subnet_width - 160) // 150))  # Máximo 2 recursos por fila, 150px por recurso
+                    
+                    for i, (res_idx, res_item) in enumerate(current_subnet_resources):
+                        col = i % resources_per_row
+                        row = i // resources_per_row
+                        
+                        x_pos = resource_x + col * 150  # Espaciado horizontal aún más generoso
+                        y_pos = resource_y + row * 80   # Espaciado vertical aún más generoso
+                        
+                        node_positions[res_idx] = (x_pos, y_pos)
+                        resource_to_parent_id[res_idx] = subnet_group_id
+                    
+                    subnet_y += subnet_height + 40  # Espaciado muy generoso entre subnets
+                
+                current_rg_y += vnet_height + 60  # Espaciado muy generoso entre VNets y recursos standalone
+            
+            # 6. RECURSOS NO VINCULADOS directamente en el RG (con mejor espaciado)
+            if standalone_resources:
+                standalone_x = 40  # Más margen desde el borde izquierdo
+                standalone_y = current_rg_y + 40  # Más separación desde VNets
+                
+                resource_counter = 0
+                resources_per_row = max(1, min(3, (rg_final_width - 80) // 120))  # Solo 3 recursos por fila, más espacio
+                
+                for res_idx, res_item in standalone_resources:
+                    col = resource_counter % resources_per_row
+                    row = resource_counter // resources_per_row
+                    
+                    x_pos = standalone_x + col * 120  # Espaciado de 120px horizontal
+                    y_pos = standalone_y + row * 100   # Espaciado de 100px vertical
+                    
+                    node_positions[res_idx] = (x_pos, y_pos)
+                    resource_to_parent_id[res_idx] = rg_group_id
+                    resource_counter += 1
+            
+            # Agregar la altura de este RG a la fila actual
+            row_rg_heights.append(rg_final_height)
+            rg_counter += 1
         
-        vnet_start_y += region_height + region_spacing
-
-    # 4. CAPA CONECTIVIDAD (VPN, ExpressRoute) - Bottom
-    current_y = vnet_start_y + 50
-    if network_structure['connectivity']:
-        print("🔗 Posicionando capa de conectividad...")
-        connectivity_group_id = "group_connectivity"
-        connectivity_width = max(len(network_structure['connectivity']) * 180, 600)
-        connectivity_height = 100
+        # Calcular la altura real de la subscription basada en el contenido
+        if row_rg_heights:
+            final_row_height = max(row_rg_heights)
+            actual_sub_height = 60 + rg_padding + current_row_height + final_row_height + rg_padding
+        else:
+            actual_sub_height = sub_height
         
-        group_info.append({
-            'id': connectivity_group_id,
-            'parent_id': '1',
-            'type': 'connectivity_zone',
-            'x': margin,
-            'y': current_y,
-            'width': connectivity_width,
-            'height': connectivity_height,
-            'label': '🔗 Hybrid Connectivity',
-            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f9fbe7;strokeColor=#689f38;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;'
-        })
+        # Actualizar la altura del contenedor de subscription
+        for group in group_info:
+            if group['id'] == sub_group_id:
+                group['height'] = actual_sub_height
+                break
         
-        x_offset = margin + 50
-        for idx, item in network_structure['connectivity']:
-            node_positions[idx] = (x_offset, current_y + connectivity_height//2 - 25)
-            resource_to_parent_id[idx] = connectivity_group_id
-            x_offset += 150
-        
-        current_y += connectivity_height + 30
-
-    # 5. CAPA SEGURIDAD (Security, Management) - Side panel
-    if network_structure['security'] or network_structure['management']:
-        print("🔒 Posicionando recursos de seguridad y gestión...")
-        security_x = margin + max_region_width + 100
-        security_y = margin
-        
-        all_security = network_structure['security'] + network_structure['management']
-        security_height = len(all_security) * 70 + 50
-        
-        security_group_id = "group_security"
-        group_info.append({
-            'id': security_group_id,
-            'parent_id': '1',
-            'type': 'security_zone',
-            'x': security_x,
-            'y': security_y,
-            'width': 250,
-            'height': security_height,
-            'label': '🔒 Security & Management',
-            'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#424242;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;'
-        })
-        
-        y_offset = security_y + 40
-        for idx, item in all_security:
-            node_positions[idx] = (security_x + 20, y_offset)
-            resource_to_parent_id[idx] = security_group_id
-            y_offset += 70
+        current_y += actual_sub_height + 50  # Espacio entre subscriptions
 
     print(f"✅ Layout de red completado: {len(node_positions)} recursos posicionados")
     return node_positions, group_info, resource_to_parent_id
 
-def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None, diagram_mode='infrastructure'):
+def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None, diagram_mode='infrastructure', no_hierarchy_edges=False):
     import sys
     import json
     import xml.etree.ElementTree as ET
@@ -954,6 +1152,48 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
             # Solo agregar si no es una dependencia jerárquica
             if dependency_pair not in hierarchical_pairs and reverse_pair not in hierarchical_pairs:
                 edges_to_create.append((src_id, tgt_id))
+    elif diagram_mode == 'network':
+        if no_hierarchy_edges:
+            # En modo network con enlaces de RG deshabilitados, excluir solo enlaces RG → recursos
+            print(f"🔗 Excluyendo TODOS los enlaces que involucren Resource Groups y enlaces VNet-Subnet")
+            for src_id, tgt_id in dependencies:
+                # Buscar los items correspondientes para determinar sus tipos
+                source_item = None
+                target_item = None
+                for item in items:
+                    if item['id'].lower() == src_id.lower():
+                        source_item = item
+                        break
+                for item in items:
+                    if item['id'].lower() == tgt_id.lower():
+                        target_item = item
+                        break
+                
+                if source_item and target_item:
+                    source_type = source_item.get('type', '').lower()
+                    target_type = target_item.get('type', '').lower()
+                    
+                    # Excluir CUALQUIER enlace que tenga un Resource Group como origen o destino
+                    has_rg_involvement = (
+                        source_type == 'microsoft.resources/subscriptions/resourcegroups' or 
+                        target_type == 'microsoft.resources/subscriptions/resourcegroups'
+                    )
+                    
+                    # Excluir enlaces entre VNets y Subnets
+                    is_vnet_subnet_link = (
+                        (source_type == 'microsoft.network/virtualnetworks' and 
+                         target_type == 'microsoft.network/virtualnetworks/subnets') or
+                        (source_type == 'microsoft.network/virtualnetworks/subnets' and 
+                         target_type == 'microsoft.network/virtualnetworks')
+                    )
+                    
+                    # Incluir todos los enlaces EXCEPTO aquellos que involucren Resource Groups o VNet-Subnet
+                    if not has_rg_involvement and not is_vnet_subnet_link:
+                        edges_to_create.append((src_id, tgt_id))
+        else:
+            # En modo network sin restricciones, agregar todas las dependencias
+            print(f"🔗 Agregando {len(dependencies)} dependencias de red")
+            edges_to_create.extend(dependencies)
     
     edge_counter = 0
     for source_id, target_id in edges_to_create:
