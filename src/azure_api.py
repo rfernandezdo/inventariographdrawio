@@ -320,6 +320,22 @@ def find_dependencies(all_items):
         if parent_id and parent_id in all_item_ids:
             dependencies.add((source_id_lower, parent_id))
         
+        # Dependencias específicas basadas en la estructura del ID
+        
+        # Para virtualnetworklinks, extraer la relación con su privatednszones padre
+        if item_type_lower == 'microsoft.network/privatednszones/virtualnetworklinks':
+            # ID típico: /subscriptions/.../resourceGroups/.../providers/Microsoft.Network/privateDnsZones/ZONE_NAME/virtualNetworkLinks/LINK_NAME
+            # Extraer la parte hasta privateDnsZones/ZONE_NAME
+            item_id = item.get('id', '')
+            if '/privatednszones/' in item_id.lower() and '/virtualnetworklinks/' in item_id.lower():
+                # Encontrar la posición donde termina la zona DNS
+                vnet_links_pos = item_id.lower().find('/virtualnetworklinks/')
+                if vnet_links_pos > 0:
+                    parent_dns_zone_id = item_id[:vnet_links_pos].lower()
+                    if parent_dns_zone_id in all_item_ids and parent_dns_zone_id != source_id_lower:
+                        dependencies.add((source_id_lower, parent_dns_zone_id))
+                        print(f"INFO: Dependencia DNS extraída: {item.get('name', 'N/A')} → {parent_dns_zone_id.split('/')[-1]}")
+        
         # Track subnet dependencies for this specific item to avoid VNet redundancy
         subnet_dependencies_added = set()
         

@@ -530,10 +530,22 @@ def generate_components_layout(items, dependencies, levels, mg_id_to_idx, sub_id
     return node_positions
 
 def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx):
-    """Disposición para diagrama de red - arquitectura de red realista estilo Azure"""
+    """Disposición para diagrama de red - arquitectura de red realista estilo Azure con layout optimizado"""
     node_positions = {}
     group_info = []
     resource_to_parent_id = {}
+    
+    # Crear grafo de dependencias para optimizar layout
+    dependency_graph = {}
+    for src_id, tgt_id in dependencies:
+        src_id_norm = src_id.lower()
+        tgt_id_norm = tgt_id.lower()
+        if src_id_norm not in dependency_graph:
+            dependency_graph[src_id_norm] = set()
+        if tgt_id_norm not in dependency_graph:
+            dependency_graph[tgt_id_norm] = set()
+        dependency_graph[src_id_norm].add(tgt_id_norm)
+        dependency_graph[tgt_id_norm].add(src_id_norm)  # Bidireccional para agrupación
 
     # Organizar recursos por categorías de red con enfoque arquitectónico
     network_structure = {
@@ -545,6 +557,62 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
         'management': [],    # Management Groups, Subscriptions (solo como contexto mínimo)
         'resource_groups': {}  # Resource Groups para organizar recursos
     }
+    
+    def group_connected_resources(resources_list, dependency_graph):
+        """Agrupa recursos conectados para minimizar cruces de líneas"""
+        if not resources_list:
+            return resources_list
+            
+        visited = set()
+        groups = []
+        
+        # Crear grupos de recursos conectados
+        for res_idx, res_item in resources_list:
+            res_id = res_item['id'].lower()
+            if res_id in visited:
+                continue
+                
+            # BFS para encontrar recursos conectados
+            group = []
+            queue = [res_id]
+            group_visited = set()
+            
+            while queue:
+                current_id = queue.pop(0)
+                if current_id in group_visited:
+                    continue
+                    
+                group_visited.add(current_id)
+                visited.add(current_id)
+                
+                # Encontrar el recurso correspondiente
+                for r_idx, r_item in resources_list:
+                    if r_item['id'].lower() == current_id:
+                        group.append((r_idx, r_item))
+                        break
+                
+                # Agregar recursos conectados
+                if current_id in dependency_graph:
+                    for connected_id in dependency_graph[current_id]:
+                        if connected_id not in group_visited:
+                            # Verificar si el recurso conectado está en la lista actual
+                            for r_idx, r_item in resources_list:
+                                if r_item['id'].lower() == connected_id:
+                                    queue.append(connected_id)
+                                    break
+            
+            if group:
+                groups.append(group)
+        
+        # Reorganizar: grupos más grandes primero para mejor aprovechamiento del espacio
+        groups.sort(key=len, reverse=True)
+        
+        # Aplanar grupos manteniendo la agrupación
+        result = []
+        for group in groups:
+            result.extend(group)
+        
+        return result
     
     # Mapeo de subnets y sus recursos
     subnet_resources = {}
@@ -1184,6 +1252,9 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                     # Obtener recursos asociados con esta subnet específica (conservar tuplas completas)
                     current_subnet_resources = [(r_idx, r) for r_idx, r in rg_data['resources'] if r.get('subnet_id') == subnet_id]
                     
+                    # Aplicar agrupación de recursos conectados dentro de la subnet
+                    current_subnet_resources = group_connected_resources(current_subnet_resources, dependency_graph)
+                    
                     subnet_group_id = f"group_subnet_{global_subnet_counter}"
                     global_subnet_counter += 1
                     
@@ -1234,6 +1305,9 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                 if vnet_direct_res:
                     print(f"🔗 Posicionando {len(vnet_direct_res)} recursos directos en VNet {vnet_item.get('name', 'N/A')}")
                     
+                    # Aplicar agrupación de recursos conectados
+                    vnet_direct_res = group_connected_resources(vnet_direct_res, dependency_graph)
+                    
                     # Posición Y después de todas las subnets + separación
                     vnet_direct_y = subnet_y + 20  # Separación desde la última subnet
                     vnet_direct_x = 60  # Margen desde el borde izquierdo de la VNet
@@ -1254,8 +1328,11 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                 
                 current_rg_y += vnet_height + 60  # Espaciado muy generoso entre VNets y recursos standalone
             
-            # 6. RECURSOS NO VINCULADOS directamente en el RG (con mejor espaciado)
+            # 6. RECURSOS NO VINCULADOS directamente en el RG (con mejor espaciado y agrupación)
             if standalone_resources:
+                # Aplicar agrupación de recursos conectados para minimizar cruces
+                standalone_resources = group_connected_resources(standalone_resources, dependency_graph)
+                
                 standalone_x = 40  # Más margen desde el borde izquierdo
                 standalone_y = current_rg_y + 40  # Más separación desde VNets
                 
