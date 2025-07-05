@@ -12,8 +12,8 @@ OUTPUT_FILENAME = "azure_full_hierarchy_with_icons.drawio"
 
 def main():
     parser = argparse.ArgumentParser(description="Generador de Diagramas de Jerarquía de Azure para Draw.io", add_help=False)
-    parser.add_argument('--diagram-mode', choices=['infrastructure', 'components', 'network'], default='infrastructure',
-                       help='Tipo de diagrama a generar: infrastructure (jerarquía completa), components (agrupado por función), network (solo recursos de red)')
+    parser.add_argument('--diagram-mode', choices=['infrastructure', 'components', 'network', 'all'], default='infrastructure',
+                       help='Tipo de diagrama a generar: infrastructure (jerarquía completa), components (agrupado por función), network (solo recursos de red), all (todos los modos en páginas separadas)')
     parser.add_argument('--no-embed-data', action='store_true', help='No incrustar todos los datos, solo el campo type')
     parser.add_argument('--no-hierarchy-edges', action='store_true', help='En modo network, ocultar enlaces jerárquicos (RGs y VNet-Subnet) manteniendo dependencias de red')
     parser.add_argument('--include-ids', nargs='+', help='IDs de management group, suscripción o resource group a incluir (y sus descendientes)')
@@ -33,7 +33,7 @@ def main():
     if args.help:
         print_help_section()
         print("\n=== OPCIONES DE DIAGRAMA ===")
-        print("--diagram-mode MODE  Tipo: infrastructure, components, network")
+        print("--diagram-mode MODE  Tipo: infrastructure, components, network, all")
         print("--no-embed-data      No incrustar datos completos")
         print("--no-hierarchy-edges Quita enlaces jerárquicos (RGs y VNet-Subnet) manteniendo dependencias de red")
         print("--include-ids IDS    Incluir solo ciertos recursos")
@@ -127,6 +127,12 @@ def main():
             print("- Diagrama agrupado por función y tipo de recurso")
         elif args.diagram_mode == 'network':
             print("- Diagrama centrado en recursos de red y conectividad")
+        elif args.diagram_mode == 'all':
+            print("- Todos los diagramas en páginas separadas del mismo archivo")
+            print("  • Página 1: Infrastructure (jerarquía completa)")
+            print("  • Página 2: Components (agrupado por función)")
+            print("  • Página 3: Network (recursos de red)")
+            print("  • Página 4: Network (sin enlaces jerárquicos)")
         print("\n--- PRÓXIMOS PASOS ---")
         print("1. Abre el archivo en https://app.diagrams.net.")
         print("2. Organiza el diagrama: Selecciona todo (Ctrl+A) -> Menú 'Organizar' -> 'Disposición' -> 'Gráfico Jerárquico'.")
