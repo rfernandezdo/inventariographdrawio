@@ -16,7 +16,7 @@ Este proyecto genera diagramas de infraestructura de Azure para draw.io a partir
 
 ### Modos de Diagrama
 
-El sistema soporta tres modos de visualización:
+El sistema soporta cuatro modos de visualización:
 
 #### 1. Infrastructure Mode (Por defecto)
 - **Propósito**: Vista jerárquica completa desde Management Groups hasta recursos individuales
@@ -41,7 +41,31 @@ El sistema soporta tres modos de visualización:
   - Soporte para opción `--no-hierarchy-edges`
   - Posicionamiento inteligente de recursos en contenedores
 
+#### 4. All Mode (Multipágina)
+- **Propósito**: Todas las vistas en un solo archivo draw.io con páginas separadas
+- **Layout**: Combina todos los modos anteriores
+- **Características especiales**:
+  - 4 páginas separadas en un solo archivo:
+    - Página 1: Infrastructure (jerarquía completa)
+    - Página 2: Components (agrupado por función)
+    - Página 3: Network (recursos de red con enlaces jerárquicos)
+    - Página 4: Network (Clean) (recursos de red sin enlaces jerárquicos)
+  - Navegación mediante pestañas en draw.io
+  - Vista integral de toda la infraestructura Azure
+  - Filtrado automático de dependencias en página Network (Clean)
+
 ## Funcionalidades Clave
+
+### Modo All (Multipágina)
+- **Archivo único**: Todas las vistas en un solo archivo draw.io
+- **4 páginas separadas**:
+  1. **Infrastructure**: Jerarquía completa con conexiones padre-hijo
+  2. **Components**: Agrupación por tipo de servicio y función
+  3. **Network**: Vista de red con enlaces jerárquicos completos
+  4. **Network (Clean)**: Vista de red solo con dependencias funcionales (~21 enlaces vs ~100)
+- **Navegación**: Pestañas en draw.io para cambiar entre vistas
+- **Compatibilidad**: Funciona con todas las opciones de filtrado y configuración
+- **Uso**: `--diagram-mode all`
 
 ### Sistema de Caché
 - **Archivos**: `.azure_cache/management_groups_YYYYMMDD_HH.json`, `.azure_cache/final_inventory_*.json`
@@ -127,10 +151,12 @@ Subscription Container
 python src/cli.py                                    # Modo infrastructure por defecto
 python src/cli.py --diagram-mode network            # Modo network
 python src/cli.py --diagram-mode components         # Modo components
+python src/cli.py --diagram-mode all               # Modo all (multipágina)
 ```
 
 ### Opciones Avanzadas
 ```bash
+python src/cli.py --diagram-mode all               # Todas las vistas en páginas separadas
 python src/cli.py --no-hierarchy-edges              # Sin enlaces jerárquicos
 python src/cli.py --no-embed-data                   # Sin datos embebidos
 python src/cli.py --include-ids ID1 ID2             # Solo IDs específicos
@@ -167,6 +193,24 @@ python src/cli.py --clear-cache                     # Limpiar caché
 - **Solución**: Ajustar patrones en `HIERARCHICAL_NETWORK_TYPES` y condiciones de filtrado
 
 ## Patrones de Código
+
+### Función Multipágina
+```python
+def generate_drawio_multipage_file(items, dependencies, embed_data=True, include_ids=None, no_hierarchy_edges=False):
+    """
+    Genera archivo draw.io con múltiples páginas (Infrastructure, Components, Network, Network Clean)
+    
+    Args:
+        items: Lista de recursos de Azure
+        dependencies: Lista de dependencias entre recursos  
+        embed_data: Si incrustar datos completos o solo el tipo
+        include_ids: IDs específicos a incluir
+        no_hierarchy_edges: Si aplicar filtrado para página Network (Clean)
+    
+    Returns:
+        str: Contenido XML del archivo draw.io con múltiples páginas
+    """
+```
 
 ### Estructura de Recursos
 ```python
@@ -240,6 +284,7 @@ resource_to_parent_id[resource_index] = 'parent_container_id'
 1. Crear función `generate_{mode}_layout()` en `drawio_export.py`
 2. Actualizar `generate_drawio_file()` para incluir el nuevo modo
 3. Añadir opción en `cli.py`
+4. Para modos multipágina, usar `generate_drawio_multipage_file()` como referencia
 
 ### Optimizaciones de Performance
 - Implementar consultas paralelas en `azure_api.py`
