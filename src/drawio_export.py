@@ -95,7 +95,7 @@ AZURE_ICONS = {
 FALLBACK_STYLES = {
     "managementgroup": "shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;",
     "subscription": "rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;",
-    "resourcegroup": "image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Resource_Groups.svg;",
+    "resourcegroup": "image;aspect=fixed;html=1;points=[];align=center;fontSize=12;labelBackgroundColor=none;image=img/lib/azure2/general/Resource_Groups.svg;",
     "resource": "rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
 }
 
@@ -113,7 +113,7 @@ def get_node_style(resource_type):
     # Obtener icono específico de Azure
     icon_path = AZURE_ICONS.get(resource_type_lower)
     if icon_path:
-        return f"image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image={icon_path}"
+        return f"image;aspect=fixed;html=1;points=[];align=center;fontSize=12;labelBackgroundColor=none;image={icon_path}"
     
     # Estilos especiales para tipos de contenedores
     if resource_type_lower == 'microsoft.management/managementgroups': 
@@ -1293,7 +1293,7 @@ def generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to
                         col = i % resources_per_row
                         row = i // resources_per_row
                         
-                        x_pos = resource_x + col * 150  # Espaciado horizontal aún más generoso
+                        x_pos = resource_x + col * 180  # Espaciado horizontal aumentado para evitar solapamiento de nombres
                         y_pos = resource_y + row * 80   # Espaciado vertical aún más generoso
                         
                         node_positions[res_idx] = (x_pos, y_pos)
