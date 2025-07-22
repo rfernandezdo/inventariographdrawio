@@ -6,7 +6,7 @@ Layout de red simplificado con grid dinámico sin colisiones
 import math
 from typing import List, Dict, Tuple, Any, Optional
 
-def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=None, mg_id_to_idx=None, sub_id_to_idx=None, rg_id_to_idx=None, include_ids: Optional[List[str]] = None) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
+def generate_network_layout(items: List[Dict], dependencies: List[Dict], include_ids: Optional[List[str]] = None) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
     """
     Genera layout de red con algoritmo grid dinámico simplificado que elimina colisiones.
     
@@ -142,18 +142,14 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=
                 
                 grid_rows = math.ceil(num_rgs / grid_cols)
                 
-                # Dimensiones dinámicas del subscription container 
-                # Usar dimensiones base para cálculo de distribución, pero permitir expansión
-                base_rg_width = 900   # Ancho base para posicionamiento
-                base_rg_height = 700  # Alto base para posicionamiento
-                grid_spacing_x = 120
-                grid_spacing_y = 140
+                # Dimensiones fijas para consistencia
+                rg_width = 650
+                rg_height = 500
+                grid_spacing_x = 100
+                grid_spacing_y = 120
                 
-                # Calcular tamaño del subscription considerando RGs grandes
-                sub_width = (grid_cols * base_rg_width) + ((grid_cols + 1) * grid_spacing_x) + 100
-                # Para altura, usar máximos posibles ya que RGs grandes pueden expandirse
-                max_rg_height = 1400  # Altura máxima posible de un RG
-                sub_height = (grid_rows * max_rg_height) + ((grid_rows + 1) * grid_spacing_y) + 150
+                sub_width = (grid_cols * rg_width) + ((grid_cols + 1) * grid_spacing_x) + 100
+                sub_height = (grid_rows * rg_height) + ((grid_rows + 1) * grid_spacing_y) + 150
                 
                 print(f"   📐 Grid {grid_cols}x{grid_rows} para {num_rgs} RGs → Container: {sub_width}x{sub_height}")
                 
@@ -186,34 +182,14 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=
                     grid_row = idx // grid_cols
                     grid_col = idx % grid_cols
                     
-                    # 💡 CALCULAR TAMAÑO DINÁMICO DEL RG SEGÚN CONTENIDO
-                    num_resources = len(rg_data['resources'])
-                    
-                    # Dimensiones dinámicas basadas en cantidad de recursos
-                    if num_resources <= 9:
-                        rg_width = 750
-                        rg_height = 650
-                    elif num_resources <= 20:
-                        rg_width = 900
-                        rg_height = 800
-                    elif num_resources <= 50:
-                        rg_width = 1200
-                        rg_height = 1000
-                    else:
-                        # Para RGs con muchos recursos (100+)
-                        rg_width = 1500
-                        rg_height = 1400
-                        # Grid especial para RGs grandes
-                        print(f"🔧 RG grande detectado: {num_resources} recursos - usando layout especial")
-                    
                     # Posición absoluta sin colisiones
-                    rg_x = grid_spacing_x + (grid_col * (900 + grid_spacing_x))  # Usar ancho base para posición
-                    rg_y = 100 + grid_spacing_y + (grid_row * (700 + grid_spacing_y))  # Usar alto base para posición
+                    rg_x = grid_spacing_x + (grid_col * (rg_width + grid_spacing_x))
+                    rg_y = 100 + grid_spacing_y + (grid_row * (rg_height + grid_spacing_y))
                     
                     rg_group_id = f"group_rg_{global_rg_counter}"
                     global_rg_counter += 1
                     
-                    # Crear container del Resource Group con tamaño dinámico
+                    # Crear container del Resource Group
                     group_info.append({
                         'id': rg_group_id,
                         'parent_id': sub_group_id,
@@ -231,40 +207,19 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=
                         node_positions[rg_data['index']] = (15, 15)
                         resource_to_parent_id[rg_data['index']] = rg_group_id
                     
-                    # Posicionar recursos dentro del Resource Group con grid optimizado
+                    # Posicionar recursos dentro del Resource Group
                     resources = rg_data['resources']
                     if resources:
-                        print(f"🔧 RG {rg_data['item'].get('name', 'N/A')}: {len(resources)} recursos → {rg_width}x{rg_height}")
+                        print(f"🔧 RG {rg_data['item'].get('name', 'N/A')}: {len(resources)} recursos")
                         
-                        # Grid optimizado según cantidad de recursos
-                        if num_resources <= 9:
-                            resources_per_row = 3
-                            resource_width = 120
-                            resource_height = 90
-                            resource_spacing_x = 80
-                            resource_spacing_y = 70
-                        elif num_resources <= 20:
-                            resources_per_row = 4
-                            resource_width = 110
-                            resource_height = 85
-                            resource_spacing_x = 70
-                            resource_spacing_y = 60
-                        elif num_resources <= 50:
-                            resources_per_row = 5
-                            resource_width = 100
-                            resource_height = 80
-                            resource_spacing_x = 60
-                            resource_spacing_y = 55
-                        else:
-                            # Para RGs con muchos recursos
-                            resources_per_row = 6
-                            resource_width = 90
-                            resource_height = 70
-                            resource_spacing_x = 50
-                            resource_spacing_y = 50
-                        
-                        start_x = 80
-                        start_y = 80
+                        # Grid simple para recursos
+                        resources_per_row = 3
+                        resource_width = 100
+                        resource_height = 80
+                        resource_spacing_x = 50
+                        resource_spacing_y = 50
+                        start_x = 60
+                        start_y = 60
                         
                         for res_idx, (res_index, res_item) in enumerate(resources):
                             res_row = res_idx // resources_per_row
@@ -273,10 +228,17 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=
                             res_x = start_x + (res_col * (resource_width + resource_spacing_x))
                             res_y = start_y + (res_row * (resource_height + resource_spacing_y))
                             
+                            # Verificar límites del container
+                            if res_x + resource_width > rg_width - 20:
+                                res_row += 1
+                                res_col = 0
+                                res_x = start_x
+                                res_y = start_y + (res_row * (resource_height + resource_spacing_y))
+                            
                             node_positions[res_index] = (res_x, res_y)
                             resource_to_parent_id[res_index] = rg_group_id
                         
-                        print(f"   ✅ Posicionados {len(resources)} recursos en RG ({resources_per_row} por fila)")
+                        print(f"   ✅ Posicionados {len(resources)} recursos en RG")
                 
                 # Avanzar Y para próxima subscription
                 current_y += sub_height + 200
@@ -300,7 +262,7 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=
     
     print(f"✅ Layout de red completado: {len(node_positions)} recursos posicionados")
     
-    return node_positions, group_info, resource_to_parent_id
+    return group_info, node_positions, resource_to_parent_id
 
 
 class CollisionDetector:

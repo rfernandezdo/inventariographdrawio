@@ -225,12 +225,12 @@ def generate_infrastructure_layout(items, dependencies, levels, mg_id_to_idx, su
                 print(f"📦 RG con {len(children)} recursos - usando layout en arco")
                 
                 # Configuración del arco (semicírculo debajo del RG) - ESPACIADO MÁXIMO
-                min_radius = 250  # Radio mínimo muy aumentado para evitar solapamiento
-                radius_per_resource = 30  # Espacio más generoso por recurso
+                min_radius = 300  # Radio mínimo muy aumentado para evitar solapamiento
+                radius_per_resource = 40  # Espacio más generoso por recurso
                 base_radius = max(min_radius, len(children) * radius_per_resource)
                 
                 # Espaciado adicional entre recursos (muy aumentado)
-                min_arc_spacing = 0.5  # Ángulo mínimo entre recursos (en radianes) - más espaciado
+                min_arc_spacing = 0.6  # Ángulo mínimo entre recursos (en radianes) - más espaciado
                 
                 arc_center_x = start_x + base_radius + node_width // 2
                 arc_center_y = level * level_spacing + 100  # RG en la parte superior
@@ -248,7 +248,7 @@ def generate_infrastructure_layout(items, dependencies, levels, mg_id_to_idx, su
                     end_angle = center_angle + total_arc / 2
                 else:
                     # Muchos recursos: usar semicírculo hacia abajo
-                    max_arc = math.pi * 0.8  # Máximo 80% de semicírculo
+                    max_arc = math.pi * 0.9  # Máximo 90% de semicírculo
                     needed_arc = min_arc_spacing * (len(children) - 1)
                     actual_arc = min(max_arc, needed_arc)
                     center_angle = math.pi  # Centro del arco (abajo)
@@ -287,7 +287,7 @@ def generate_infrastructure_layout(items, dependencies, levels, mg_id_to_idx, su
                 node_positions[node_idx] = (arc_center_x, arc_center_y)
                 
                 # Ancho total necesario para el layout en arco (muy aumentado)
-                total_width = 2.5 * (base_radius + node_width + 80)  # Padding muy generoso
+                total_width = 2.8 * (base_radius + node_width + 100)  # Padding muy generoso
                 return total_width
             
             else:

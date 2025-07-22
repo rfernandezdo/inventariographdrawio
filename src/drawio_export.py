@@ -19,19 +19,27 @@ try:
     from drawio.layouts.network import generate_network_layout as _modular_network_layout
     from drawio.icons import AZURE_ICONS as _modular_azure_icons, HIDDEN_RESOURCE_TYPES as _modular_hidden_types
     from drawio.styles import HIDDEN_RESOURCE_STYLE as _modular_hidden_style
+    from drawio.multipage import generate_drawio_multipage_file as _modular_multipage_file
+    from drawio.single_page import generate_drawio_file as _modular_single_page_file
+    from drawio.filtering import filter_items_and_dependencies as _modular_filter_items
     _MODULAR_AVAILABLE = True
     print("🔄 Usando módulos refactorizados de src/drawio/")
 except ImportError:
     try:
         # Fallback a importaciones relativas
+        # Usando versión simple y segura de infrastructure layout
+        from .drawio.layouts.infrastructure_simple import generate_infrastructure_layout as _modular_infrastructure_layout
         from .drawio.styles import get_node_style as _modular_get_node_style
         from .drawio.xml_builder import pretty_print_xml as _modular_pretty_print_xml
-        from .drawio.layouts.infrastructure import generate_infrastructure_layout as _modular_infrastructure_layout
         from .drawio.layouts.components import generate_components_layout as _modular_components_layout
         from .drawio.layouts.network import generate_network_layout as _modular_network_layout
         from .drawio.icons import AZURE_ICONS as _modular_azure_icons, HIDDEN_RESOURCE_TYPES as _modular_hidden_types
         from .drawio.styles import HIDDEN_RESOURCE_STYLE as _modular_hidden_style
+        from .drawio.multipage import generate_drawio_multipage_file as _modular_multipage_file
+        from .drawio.single_page import generate_drawio_file as _modular_single_page_file
+        from .drawio.filtering import filter_items_and_dependencies as _modular_filter_items
         _MODULAR_AVAILABLE = True
+        print("🔄 Usando módulos refactorizados de src/drawio/ con infrastructure simplificada")
         print("🔄 Usando módulos refactorizados de src/drawio/ (importación relativa)")
     except ImportError:
         _MODULAR_AVAILABLE = False
@@ -136,6 +144,27 @@ def generate_network_layout_wrapper(items, dependencies, levels, mg_id_to_idx, s
         return _modular_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     else:
         return generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+
+def generate_drawio_multipage_file_wrapper(items, dependencies, embed_data=True, include_ids=None, no_hierarchy_edges=False):
+    """Wrapper que usa módulos refactorizados cuando están disponibles"""
+    if _MODULAR_AVAILABLE:
+        return _modular_multipage_file(items, dependencies, embed_data, include_ids, no_hierarchy_edges)
+    else:
+        return generate_drawio_multipage_file(items, dependencies, embed_data, include_ids, no_hierarchy_edges)
+
+def generate_drawio_file_wrapper(items, dependencies, embed_data=True, include_ids=None, diagram_mode='infrastructure', no_hierarchy_edges=False):
+    """Wrapper que usa módulos refactorizados cuando están disponibles"""
+    if _MODULAR_AVAILABLE:
+        return _modular_single_page_file(items, dependencies, embed_data, include_ids, diagram_mode, no_hierarchy_edges)
+    else:
+        return generate_drawio_file(items, dependencies, embed_data, include_ids, diagram_mode, no_hierarchy_edges)
+
+def filter_items_and_dependencies_wrapper(items, dependencies, include_ids=None, exclude_ids=None):
+    """Wrapper que usa módulos refactorizados cuando están disponibles"""
+    if _MODULAR_AVAILABLE:
+        return _modular_filter_items(items, dependencies, include_ids, exclude_ids)
+    else:
+        return filter_items_and_dependencies(items, dependencies, include_ids, exclude_ids)
 
 
 # === FUNCIONES LEGACY (fallback) ===
@@ -438,30 +467,31 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                 
                 # Determinar estilo de la flecha
                 is_hierarchical = False
-                is_rg_to_resource = False
-                
+                is_rg_to_subscription = False
+                is_resource_to_rg = False
+
                 if page_info['mode'] == 'infrastructure' and tree_edges:
-                    is_hierarchical = (source_id_lower, target_id_lower) in [(c, p) for c, p in tree_edges]
+                    is_hierarchical = (source_id.lower(), target_id.lower()) in [(c.lower(), p.lower()) for c, p in tree_edges]
                     
                     if is_hierarchical:
-                        source_item = None
-                        target_item = None
-                        for item in items:
-                            if item['id'].lower() == source_id_lower:
-                                source_item = item
-                            elif item['id'].lower() == target_id_lower:
-                                target_item = item
+                        source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
+                        target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
                         
                         if target_item and source_item:
                             target_type = target_item.get('type', '').lower()
                             source_type = source_item.get('type', '').lower()
                             
-                            is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                            is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
+                                                     target_type == 'microsoft.resources/subscriptions')
+
+                            is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
                                                source_type not in ['microsoft.management/managementgroups', 
                                                                  'microsoft.resources/subscriptions',
                                                                  'microsoft.resources/subscriptions/resourcegroups'])
                 
-                if is_hierarchical and is_rg_to_resource:
+                if is_hierarchical and is_rg_to_subscription:
+                    style = "edgeStyle=entityRelationEdgeStyle;exitX=0.5;exitY=0;exitPerimeter=1;entryX=0.5;entryY=1;entryPerimeter=1;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
+                elif is_hierarchical and is_resource_to_rg:
                     style = "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
                 elif is_hierarchical:
                     style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
@@ -469,12 +499,12 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                     style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;"
                 
                 edge_cell = ET.SubElement(root, "mxCell", 
-                                        id=f"edge-{edge_counter}", 
+                                        id=f"edge-{page_info['id']}-{edge_counter}", 
                                         style=style, 
                                         parent="1", 
+                                        edge="1", 
                                         source=source_cell, 
-                                        target=target_cell, 
-                                        edge="1")
+                                        target=target_cell)
                 ET.SubElement(edge_cell, "mxGeometry", attrib={'relative': '1', 'as': 'geometry'})
                 edge_counter += 1
     
@@ -570,83 +600,15 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     edges_to_create = []
     
     if diagram_mode == 'infrastructure' and tree_edges:
-        # Para el modo infrastructure, usar las conexiones del árbol DFS
-        print(f"🔗 Usando {len(tree_edges)} conexiones de árbol jerárquico")
-        item_id_to_idx = {item['id'].lower(): i for i, item in enumerate(items)}
+        edges_to_create.extend(tree_edges)
         
-        for child_id, parent_id in tree_edges:
-            # child_id y parent_id son IDs de Azure, convertir a índices
-            if child_id in item_id_to_idx and parent_id in item_id_to_idx:
-                edges_to_create.append((child_id, parent_id))  # De hijo a padre para mostrar jerarquía
-    else:
-        # Para otros modos (components, network), determinar las dependencias según las opciones
-        if diagram_mode == 'network' and no_hierarchy_edges:
-            # En modo network con filtrado de enlaces jerárquicos
-            print(f"🔗 Filtrando enlaces jerárquicos (Resource Groups y VNet-Subnet) de {len(dependencies)} dependencias")
-            
-            # Crear diccionario de mapeo ID → tipo una sola vez para eficiencia
-            id_to_type = {item['id'].lower(): item.get('type', '').lower() for item in items}
-            
-            for src_id, tgt_id in dependencies:
-                source_type = id_to_type.get(src_id.lower(), '')
-                target_type = id_to_type.get(tgt_id.lower(), '')
-                
-                if source_type and target_type:
-                    # Excluir enlaces jerárquicos de Resource Groups
-                    has_rg_involvement = (
-                        source_type == 'microsoft.resources/subscriptions/resourcegroups' or 
-                        target_type == 'microsoft.resources/subscriptions/resourcegroups'
-                    )
-                    
-                    # Excluir enlaces VNet-Subnet (jerárquicos)
-                    is_vnet_subnet_link = (
-                        (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/virtualnetworks/subnets') or
-                        (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/virtualnetworks')
-                    )
-                    
-                    # Excluir enlaces jerárquicos específicos de recursos de red con VNets/Subnets
-                    network_hierarchy_patterns = [
-                        # Private Endpoints con VNets/Subnets
-                        (source_type == 'microsoft.network/privateendpoints' and target_type == 'microsoft.network/virtualnetworks'),
-                        (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/privateendpoints'),
-                        (source_type == 'microsoft.network/privateendpoints' and target_type == 'microsoft.network/virtualnetworks/subnets'),
-                        (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/privateendpoints'),
-                        
-                        # Network Interfaces con VNets/Subnets
-                        (source_type == 'microsoft.network/networkinterfaces' and target_type == 'microsoft.network/virtualnetworks'),
-                        (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/networkinterfaces'),
-                        (source_type == 'microsoft.network/networkinterfaces' and target_type == 'microsoft.network/virtualnetworks/subnets'),
-                        (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/networkinterfaces'),
-                        
-                        # Private DNS Zone Virtual Network Links con VNets (pero NO con Private DNS Zones)
-                        (source_type == 'microsoft.network/privatednszones/virtualnetworklinks' and target_type == 'microsoft.network/virtualnetworks'),
-                        (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/privatednszones/virtualnetworklinks'),
-                    ]
-                    
-                    is_network_hierarchy_link = any(network_hierarchy_patterns)
-                    
-                    # Incluir el enlace si NO es jerárquico
-                    if not has_rg_involvement and not is_vnet_subnet_link and not is_network_hierarchy_link:
-                        edges_to_create.append((src_id, tgt_id))
-            
-            print(f"🔗 Conservando {len(edges_to_create)} enlaces de dependencias de red")
-        else:
-            # Para otros modos sin restricciones, usar las dependencias originales
-            edges_to_create = dependencies
-    
-    # Agregar también las dependencias no jerárquicas como líneas punteadas en modo infrastructure
-    if diagram_mode == 'infrastructure':
-        print(f"🔗 Agregando {len(dependencies)} dependencias adicionales como relaciones")
-        # Filtrar dependencias que no son jerárquicas para mostrarlas como relaciones
-        hierarchical_pairs = set(tree_edges) if tree_edges else set()
-        
+        # Agregar dependencias no jerárquicas
+        hierarchical_pairs = set(tree_edges)
         for src_id, tgt_id in dependencies:
-            dependency_pair = (src_id.lower(), tgt_id.lower())
-            reverse_pair = (tgt_id.lower(), src_id.lower())
-            
-            # Solo agregar si no es una dependencia jerárquica
-            if dependency_pair not in hierarchical_pairs and reverse_pair not in hierarchical_pairs:
+            if (src_id, tgt_id) not in hierarchical_pairs and (tgt_id, src_id) not in hierarchical_pairs:
                 edges_to_create.append((src_id, tgt_id))
+    else:
+        edges_to_create = dependencies
     
     edge_counter = 0
     for source_id, target_id in edges_to_create:
@@ -657,47 +619,43 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
             source_cell = azure_id_to_cell_id[source_id_lower]
             target_cell = azure_id_to_cell_id[target_id_lower]
             
-            # Determinar estilo de la flecha
-            is_hierarchical = False
-            is_rg_to_resource = False
-            
-            if diagram_mode == 'infrastructure' and tree_edges:
-                is_hierarchical = (source_id_lower, target_id_lower) in [(c, p) for c, p in tree_edges]
-                
-                # Identificar si es una conexión RG → Resource específicamente
-                if is_hierarchical:
-                    # Buscar los items correspondientes
-                    source_item = None
-                    target_item = None
-                    for item in items:
-                        if item['id'].lower() == source_id_lower:
-                            source_item = item
-                        elif item['id'].lower() == target_id_lower:
-                            target_item = item
-                    
-                    # Verificar si es RG → Resource (parent → child en tree_edges)
-                    if target_item and source_item:
-                        target_type = target_item.get('type', '').lower()
-                        source_type = source_item.get('type', '').lower()
-                        
-                        # RG es el padre (target) y el recurso es el hijo (source)
-                        is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
-                                           source_type not in ['microsoft.management/managementgroups', 
-                                                             'microsoft.resources/subscriptions',
-                                                             'microsoft.resources/subscriptions/resourcegroups'])
-            
-            if is_hierarchical and is_rg_to_resource:
-                # Conexión RG → Resource - línea sólida RECTA
+            is_hierarchical = (source_id, target_id) in tree_edges if tree_edges else False
+            is_rg_to_subscription = False
+            is_resource_to_rg = False
+
+            if is_hierarchical:
+                source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
+                target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
+                if source_item and target_item:
+                    source_type = source_item.get('type', '').lower()
+                    target_type = target_item.get('type', '').lower()
+                    is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
+                                             target_type == 'microsoft.resources/subscriptions')
+                    is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                                       source_type not in ['microsoft.management/managementgroups', 
+                                                         'microsoft.resources/subscriptions',
+                                                         'microsoft.resources/subscriptions/resourcegroups'])
+
+            if is_hierarchical and is_rg_to_subscription:
+                style = "edgeStyle=entityRelationEdgeStyle;exitX=0.5;exitY=0;exitPerimeter=1;entryX=0.5;entryY=1;entryPerimeter=1;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
+            elif is_hierarchical and is_resource_to_rg:
                 style = "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
             elif is_hierarchical:
-                # Otras conexiones jerárquicas (MG → Sub, Sub → RG, MG → MG) - línea sólida ORTOGONAL
                 style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
             else:
-                # Dependencia no jerárquica - línea punteada ortogonal
                 style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;"
             
-            edge_cell = ET.SubElement(root, "mxCell", id=f"edge-{edge_counter}", style=style, parent="1", source=source_cell, target=target_cell, edge="1")
-            ET.SubElement(edge_cell, "mxGeometry", attrib={'relative': '1', 'as': 'geometry'})
+            edge_cell = ET.SubElement(root, "mxCell", 
+                                    id=f"edge-{edge_counter}", 
+                                    style=style, 
+                                    parent="1", 
+                                    edge="1", 
+                                    source=source_cell, 
+                                    target=target_cell)
+            
+            ET.SubElement(edge_cell, "mxGeometry", 
+                         attrib={'relative': '1', 'as': 'geometry'})
+            
             edge_counter += 1
             
     return pretty_print_xml_wrapper(mxfile)
