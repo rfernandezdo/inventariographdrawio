@@ -13,7 +13,7 @@ HIDDEN_RESOURCE_TYPES = {
 AZURE_ICONS = {
     "microsoft.aad/domainservices": "img/lib/azure2/identity/Entra_Domain_Services.svg",
     "microsoft.alertsmanagement/smartdetectoralertrules": "img/lib/azure2/management_governance/Alerts.svg",
-    "microsoft.apimanagement/service": "img/lib/azure2/app_services/API_Management.svg",
+    "microsoft.apimanagement/service": "img/lib/azure2/app_services/API_Management_Services.svg",
     "microsoft.automation/automationaccounts": "img/lib/azure2/management_governance/Automation_Accounts.svg",
     "microsoft.cognitiveservices/accounts": "img/lib/azure2/ai_machine_learning/Cognitive_Services.svg",
     "microsoft.compute/availabilitysets": "img/lib/azure2/compute/Availability_Set.svg",
@@ -38,6 +38,7 @@ AZURE_ICONS = {
     "microsoft.network/connections": "img/lib/azure2/networking/Connections.svg",
     "microsoft.network/azurefirewalls": "img/lib/azure2/networking/Azure_Firewall.svg",
     "microsoft.network/azurefirewallpolicies": "img/lib/azure2/networking/Azure_Firewall_Policy.svg",
+    "microsoft.network/bastionhosts": "img/lib/azure2/networking/Bastions.svg",
     "microsoft.network/dnszones": "img/lib/azure2/networking/DNS_Zone.svg",
     "microsoft.network/dnszones/recordsets": "img/lib/azure2/networking/DNS_Record_Sets.svg",
     "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuits.svg",
@@ -56,6 +57,7 @@ AZURE_ICONS = {
     "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connections.svg",
     "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
     "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
+    "microsoft.portal/dashboards": "img/lib/azure2/general/Dashboard2.svg;"
     "microsoft.network/privatednszones": "img/lib/azure2/networking/DNS_Zones.svg",
     "microsoft.network/privatednszones/virtualnetworklinks": "img/lib/azure2/networking/Virtual_Network_Link.svg",
     "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",
@@ -82,4 +84,5 @@ AZURE_ICONS = {
     "microsoft.cdn/profiles/afdendpoints": "img/lib/azure2/networking/CDN_Endpoints.svg",    
     "microsoft.insights/workbooks": "img/lib/azure2/analytics/Azure_Workbooks.svg",
     "microsoft.compute/diskencryptionsets": "img/lib/azure2/compute/Disk_Encryption_Sets.svg;"
+    
 }
