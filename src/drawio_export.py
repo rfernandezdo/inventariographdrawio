@@ -138,10 +138,10 @@ def generate_components_layout_wrapper(items, dependencies, levels, mg_id_to_idx
     else:
         return generate_components_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
 
-def generate_network_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx):
+def generate_network_layout_wrapper(items, dependencies, levels=None, mg_id_to_idx=None, sub_id_to_idx=None, rg_id_to_idx=None):
     """Wrapper que usa módulos refactorizados cuando están disponibles"""
     if _MODULAR_AVAILABLE:
-        return _modular_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        return _modular_network_layout(items, dependencies)
     else:
         return generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
 
@@ -320,7 +320,7 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
         # Generar layout según el modo
         if page_info['mode'] == 'network':
             node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(
-                items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+                items, dependencies)
         elif page_info['mode'] == 'components':
             node_positions = generate_components_layout_wrapper(
                 items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
@@ -547,7 +547,7 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     tree_edges = []  # Para almacenar las conexiones del árbol
     
     if diagram_mode == 'network':
-        node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(items, dependencies)
     elif diagram_mode == 'components':
         node_positions = generate_components_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     else: # 'infrastructure'

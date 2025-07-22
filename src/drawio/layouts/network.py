@@ -1,330 +1,527 @@
 #!/usr/bin/env python3
 """
-Layout de red simplificado con grid dinámico sin colisiones
+Layout de red jerárquico y sin colisiones para Azure.
+
+Este módulo genera un layout de red que representa la jerarquía completa:
+Subscription -> Resource Group -> VNet -> Subnet -> Recursos.
+
+Utiliza un algoritmo de cálculo de tamaño dinámico y posicionamiento en grid
+para aseg                'label': '', 'style': CONTAINER_STYLES['resource_group']rar que no haya solapamientos, incluso con RGs y VNets de tamaños muy diferentes.
 """
 
 import math
 from typing import List, Dict, Tuple, Any, Optional
 
-def generate_network_layout(items: List[Dict], dependencies: List[Dict], levels=None, mg_id_to_idx=None, sub_id_to_idx=None, rg_id_to_idx=None, include_ids: Optional[List[str]] = None) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
+# --- CONSTANTES DE LAYOUT ---
+# Espaciados y márgenes para un layout limpio y legible
+PADDING = {'top': 60, 'bottom': 60, 'left': 60, 'right': 60}
+RG_GRID_SPACING = {'x': 100, 'y': 100}
+VNET_SPACING = {'y': 80}
+SUBNET_SPACING = {'y': 60}
+RESOURCE_SPACING = {'x': 150, 'y': 120}
+RESOURCES_PER_ROW = {'subnet': 2, 'vnet': 3, 'rg': 3}
+
+# Dimensiones mínimas para contenedores
+MIN_WIDTH = {'vnet': 600, 'subnet': 450}
+MIN_HEIGHT = {'rg': 300, 'vnet': 250, 'subnet': 200}
+
+# Estilos para los contenedores generados
+CONTAINER_STYLES = {
+    "subscription": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+    "resource_group": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#f9a825;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+    "vnet": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#4caf50;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+    "subnet": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ab47bc;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;"
+}
+
+def _get_parent_id(azure_id: str, level: str) -> Optional[str]:
+    """Extrae el ID del padre de un ID de recurso de Azure."""
+    parts = azure_id.lower().split('/')
+    try:
+        if level == 'sub' and 'subscriptions' in parts:
+            idx = parts.index('subscriptions')
+            return '/'.join(parts[:idx + 2])
+        if level == 'rg' and 'resourcegroups' in parts:
+            idx = parts.index('resourcegroups')
+            return '/'.join(parts[:idx + 2])
+        if level == 'vnet' and 'virtualnetworks' in parts:
+            idx = parts.index('virtualnetworks')
+            return '/'.join(parts[:idx + 2])
+    except (ValueError, IndexError):
+        return None
+    return None
+
+def _organize_resources_by_hierarchy(items: List[Dict]) -> Dict:
     """
-    Genera layout de red con algoritmo grid dinámico simplificado que elimina colisiones.
-    
-    Returns:
-        Tuple de (group_info, node_positions, resource_to_parent_id)
+    Organiza los recursos en una estructura jerárquica anidada:
+    Subscription -> RG -> VNet -> Subnet -> Recursos.
     """
-    print("🔍 Analizando recursos para diagrama de red...")
+    subscriptions = {}
+    item_map = {item['id'].lower(): item for item in items}
     
-    # Estructuras de datos principales
+    # 1. Inicializar todas las entidades contenedoras (Subs, RGs, VNets, Subnets)
+    for item in items:
+        item_id = item['id'].lower()
+        item_type = (item.get('type') or '').lower()
+
+        if item_type == 'microsoft.resources/subscriptions':
+            if item_id not in subscriptions:
+                subscriptions[item_id] = {**item, 'resource_groups': {}}
+        
+        elif item_type == 'microsoft.resources/subscriptions/resourcegroups':
+            sub_id = _get_parent_id(item_id, 'sub') # No implementado, pero como ejemplo
+            # Esto requiere una función _get_parent_id más robusta o pasar el parent_id
+            # Por ahora, asumimos una estructura plana de RGs por subscripción
+            pass
+
+    # 2. Crear estructura anidada
+    # Esta parte es compleja y se simplifica en el layout principal
+    # La lógica real de anidación se hace durante el cálculo del layout
+    
+    return subscriptions # Devuelve una estructura simplificada por ahora
+
+
+def _find_subnet_for_resource(item: Dict, nic_to_subnet_map: Dict) -> Optional[str]:
+    """
+    Determina el ID de la subnet para un recurso, ya sea por asociación directa o indirecta.
+    """
+    props = item.get('properties', {})
+    item_type = (item.get('type') or '').lower()
+
+    # 1. Asociación directa en propiedades
+    if 'subnet' in props and isinstance(props['subnet'], dict) and props['subnet'].get('id'):
+        return props['subnet']['id']
+    
+    if 'ipConfigurations' in props and props.get('ipConfigurations') and isinstance(props['ipConfigurations'], list):
+        ip_config = props['ipConfigurations'][0]
+        if 'properties' in ip_config and 'subnet' in ip_config.get('properties', {}) and ip_config['properties']['subnet'].get('id'):
+            return ip_config['properties']['subnet']['id']
+
+    # 2. Asociación indirecta (vía NIC para VMs, etc.)
+    if 'networkProfile' in props and isinstance(props.get('networkProfile'), dict) and isinstance(props['networkProfile'].get('networkInterfaces'), list):
+        for nic_ref in props['networkProfile']['networkInterfaces']:
+            if isinstance(nic_ref, dict) and 'id' in nic_ref:
+                nic_id = nic_ref['id'].lower()
+                if nic_id in nic_to_subnet_map:
+                    return nic_to_subnet_map[nic_id]
+
+    # 3. Asociación para Private Endpoints (que tienen su propia NIC)
+    if item_type == 'microsoft.network/privateendpoints':
+        if 'networkInterfaces' in props and isinstance(props.get('networkInterfaces'), list) and props['networkInterfaces']:
+            nic_id = props['networkInterfaces'][0].get('id', '').lower()
+            if nic_id in nic_to_subnet_map:
+                return nic_to_subnet_map[nic_id]
+
+    return None
+
+def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwargs) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
+    """
+    Genera un layout de red jerárquico y sin colisiones.
+    """
+    print("🚀 Iniciando layout de red jerárquico...")
+
     group_info = []
     node_positions = {}
     resource_to_parent_id = {}
     
-    # Contadores globales para IDs únicos
-    global_sub_counter = 0
-    global_rg_counter = 0
+    item_map = {item['id'].lower(): (i, item) for i, item in enumerate(items)}
     
-    # 1. ORGANIZACIÓN JERÁRQUICA DE DATOS
-    # Clasificar recursos por Management Group → Subscription → Resource Group
-    management_groups = {}
-    subnet_resources = {}  # subnet_id → lista de recursos en esa subnet
-    
-    # Analizar todos los recursos y organizarlos jerárquicamente
+    # 1. Organizar recursos por jerarquía
+    subs = {}
+    # Pre-construir mapa de NICs a subnets para una búsqueda más rápida
+    nic_to_subnet_map = {}
     for i, item in enumerate(items):
-        resource_type = (item.get('type') or '').lower()
-        resource_id = item['id'].lower()
+        item_type = (item.get('type') or '').lower()
+        if item_type == 'microsoft.network/networkinterfaces':
+            props = item.get('properties', {})
+            if 'ipConfigurations' in props and props.get('ipConfigurations'):
+                ip_config = props['ipConfigurations'][0]
+                if 'properties' in ip_config and 'subnet' in ip_config.get('properties', {}) and ip_config['properties']['subnet'].get('id'):
+                    nic_to_subnet_map[item['id'].lower()] = ip_config['properties']['subnet']['id'].lower()
+
+    for i, item in enumerate(items):
+        item_id = item['id'].lower()
+        item_type = (item.get('type') or '').lower()
         
-        if resource_type == 'microsoft.resources/subscriptions':
-            # Es una subscription
-            subscription_id = resource_id
-            subscription_name = item.get('name', 'Subscription')
-            
-            # Determinar management group (simplificado)
-            mg_name = 'Default Management Group'
-            
-            if mg_name not in management_groups:
-                management_groups[mg_name] = {'subscriptions': {}}
-            
-            if subscription_id not in management_groups[mg_name]['subscriptions']:
-                management_groups[mg_name]['subscriptions'][subscription_id] = {
-                    'item': item,
-                    'index': i,
-                    'resource_groups': {}
-                }
+        # Inicializar contenedores (RG, VNet, Subnet)
+        if 'resourcegroups' in item_id:
+            rg_id = _get_parent_id(item_id, 'rg')
+            sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+            if not sub_id:
+                continue
+
+            if sub_id not in subs:
+                subs[sub_id] = {'resource_groups': {}}
+            if rg_id not in subs[sub_id]['resource_groups']:
+                subs[sub_id]['resource_groups'][rg_id] = {'vnets': {}, 'standalone_resources': []}
+
+            if item_type == 'microsoft.resources/subscriptions/resourcegroups':
+                subs[sub_id]['resource_groups'][rg_id]['item_index'] = i
+            elif 'virtualnetworks' in item_id:
+                vnet_id = _get_parent_id(item_id, 'vnet')
+                if vnet_id not in subs[sub_id]['resource_groups'][rg_id]['vnets']:
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id] = {'subnets': {}, 'direct_resources': []}
+                
+                if item_type == 'microsoft.network/virtualnetworks':
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['item_index'] = i
+                elif item_type == 'microsoft.network/virtualnetworks/subnets':
+                    if item_id not in subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets']:
+                        subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][item_id] = {'resources': []}
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][item_id]['item_index'] = i
+    
+    # Asociar todos los recursos a su contenedor correcto
+    for i, item in enumerate(items):
+        item_id = item['id'].lower()
+        item_type = (item.get('type') or '').lower()
+
+        # Ignorar los contenedores mismos, ya están procesados
+        if item_type in ['microsoft.resources/subscriptions', 'microsoft.resources/subscriptions/resourcegroups', 'microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets']:
+            continue
+
+        subnet_id = _find_subnet_for_resource(item, nic_to_subnet_map)
         
-        elif resource_type == 'microsoft.resources/subscriptions/resourcegroups':
-            # Es un resource group
-            rg_id = resource_id
-            parts = rg_id.split('/')
-            subscription_id = '/'.join(parts[:3])  # /subscriptions/{sub-id}
+        if subnet_id:
+            subnet_id = subnet_id.lower()
+            vnet_id = _get_parent_id(subnet_id, 'vnet')
+            rg_id = _get_parent_id(vnet_id, 'rg') if vnet_id else None
+            sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
             
-            # Buscar la subscription en management groups
-            for mg_name, mg_data in management_groups.items():
-                if subscription_id in mg_data['subscriptions']:
-                    mg_data['subscriptions'][subscription_id]['resource_groups'][rg_id] = {
-                        'item': item,
-                        'index': i,
-                        'resources': []
+            if sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups'] and vnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'] and subnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets']:
+                subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][subnet_id]['resources'].append(i)
+            else: # Si la subnet no existe en la jerarquía, tratar como standalone en el RG
+                rg_id = _get_parent_id(item_id, 'rg')
+                if rg_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups']:
+                    subs[sub_id]['resource_groups'][rg_id]['standalone_resources'].append(i)
+        else:
+            # Si no está en una subnet, ver si está en una VNet directamente
+            vnet_id = _get_parent_id(item_id, 'vnet')
+            if vnet_id:
+                rg_id = _get_parent_id(vnet_id, 'rg')
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                if sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups'] and vnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets']:
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['direct_resources'].append(i)
+                else: # Fallback a standalone en RG
+                    rg_id = _get_parent_id(item_id, 'rg')
+                    if rg_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups']:
+                        subs[sub_id]['resource_groups'][rg_id]['standalone_resources'].append(i)
+            else: # Finalmente, es un recurso standalone en un RG
+                rg_id = _get_parent_id(item_id, 'rg')
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                if sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups']:
+                    subs[sub_id]['resource_groups'][rg_id]['standalone_resources'].append(i)
+
+    # 2. Calcular layout y generar contenedores (bottom-up)
+    subscription_layouts = {}
+    for sub_id, sub_data in subs.items():
+        rg_layouts = {}
+        for rg_id, rg_data in sub_data['resource_groups'].items():
+            
+            # Layout para recursos standalone en el RG
+            standalone_layout = _calculate_grid_layout(rg_data['standalone_resources'], RESOURCES_PER_ROW['rg'])
+            
+            # Layout para VNets
+            vnet_layouts = {}
+            for vnet_id, vnet_data in rg_data['vnets'].items():
+                
+                # Layout para recursos directos en la VNet
+                direct_res_layout = _calculate_grid_layout(vnet_data['direct_resources'], RESOURCES_PER_ROW['vnet'])
+                
+                # Layout para Subnets
+                subnet_layouts = {}
+                for subnet_id, subnet_data in vnet_data['subnets'].items():
+                    subnet_layout = _calculate_grid_layout(subnet_data['resources'], RESOURCES_PER_ROW['subnet'])
+                    subnet_layouts[subnet_id] = {
+                        'item_index': subnet_data.get('item_index'),
+                        'layout': subnet_layout,
+                        'size': _get_required_size(subnet_layout, MIN_WIDTH['subnet'], MIN_HEIGHT['subnet'])
                     }
+                
+                vnet_layouts[vnet_id] = {
+                    'item_index': vnet_data.get('item_index'),
+                    'direct_resources_layout': direct_res_layout,
+                    'subnet_layouts': subnet_layouts
+                }
+
+            rg_layouts[rg_id] = {
+                'item_index': rg_data.get('item_index'),
+                'standalone_layout': standalone_layout,
+                'vnet_layouts': vnet_layouts
+            }
+        subscription_layouts[sub_id] = {'rg_layouts': rg_layouts}
+
+    # 3. Posicionar todo (top-down)
+    current_y = PADDING['top']
+    sub_counter = 0
+    for sub_id, sub_layout_data in subscription_layouts.items():
+        
+        # Calcular tamaño total de la subscripción
+        sub_item_index, sub_item = item_map.get(sub_id, (None, None))
+        if not sub_item:
+            # Si no encontramos el item de subscripción, buscamos uno por el ID
+            for i, item in enumerate(items):
+                if item['id'].lower() == sub_id:
+                    sub_item_index = i
                     break
         
-        elif resource_type == 'microsoft.network/virtualnetworks/subnets':
-            # Es una subnet - inicializar lista de recursos
-            subnet_id = resource_id
-            subnet_resources[subnet_id] = []
+        sub_name = items[sub_item_index].get('name') if sub_item_index is not None else sub_id.split('/')[-1]
+
+        rg_layouts_for_sub = sub_layout_data.get('rg_layouts', {})
+        rg_positions_in_sub, sub_size = _calculate_container_grid_layout(
+            rg_layouts_for_sub, 
+            lambda rg_layout: _calculate_rg_size(rg_layout)
+        )
+
+        # Crear container de Subscription
+        sub_group_id = f"group_sub_{sub_counter}"
+        sub_counter += 1
         
-        else:
-            # Es un recurso regular - asignar a su Resource Group
-            parts = resource_id.split('/')
-            if len(parts) >= 5:
-                rg_id = '/'.join(parts[:5])  # /subscriptions/{sub}/resourceGroups/{rg}
-                
-                # Buscar el RG en la estructura
-                for mg_name, mg_data in management_groups.items():
-                    for sub_id, sub_data in mg_data['subscriptions'].items():
-                        if rg_id in sub_data['resource_groups']:
-                            sub_data['resource_groups'][rg_id]['resources'].append((i, item))
-                            break
-    
-    # 2. DETECTAR ASOCIACIONES DE SUBNET PARA RECURSOS DE RED
-    for i, item in enumerate(items):
-        resource_type = (item.get('type') or '').lower()
-        
-        if resource_type not in ['microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets', 'microsoft.resources/subscriptions/resourcegroups', 'microsoft.resources/subscriptions']:
-            # Buscar referencias a subnet en las propiedades
-            props = item.get('properties') or {}
-            subnet_refs = []
+        group_info.append({
+            'id': sub_group_id, 'parent_id': '1', 'type': 'subscription_container',
+            'x': PADDING['left'], 'y': current_y,
+            'width': sub_size[0] + PADDING['left'] + PADDING['right'], 
+            'height': sub_size[1] + PADDING['top'] + PADDING['bottom'],
+            'label': '', 'style': CONTAINER_STYLES['subscription']
+        })
+        if sub_item_index is not None:
+            # Colocar el icono de la subscripción dentro del contenedor
+            node_positions[sub_item_index] = (PADDING['left'] + 20, current_y + 20)
+            resource_to_parent_id[sub_item_index] = sub_group_id
+
+        rg_counter = 0
+        for rg_id, rg_pos in rg_positions_in_sub.items():
+            rg_layout = rg_layouts_for_sub[rg_id]
+            rg_size = _calculate_rg_size(rg_layout)
+            rg_item_index = rg_layout.get('item_index')
+            rg_name = items[rg_item_index].get('name') if rg_item_index is not None else "Resource Group"
             
-            # Para Network Interfaces, buscar en ipConfigurations
-            if resource_type == 'microsoft.network/networkinterfaces':
-                ip_configs = props.get('ipConfigurations', [])
-                for ip_config in ip_configs:
-                    subnet_id = (ip_config.get('properties', {}) or {}).get('subnet', {}).get('id')
-                    if subnet_id:
-                        subnet_refs.append(subnet_id.lower())
-                        print(f"🔗 NIC {item.get('name')} detectada con subnet {subnet_id}")
-                        break
+            rg_group_id = f"{sub_group_id}_rg_{rg_counter}"
+            rg_counter += 1
             
-            # Agregar recurso a la subnet correspondiente
-            for subnet_ref in subnet_refs:
-                if subnet_ref in subnet_resources:
-                    subnet_resources[subnet_ref].append((i, item))
-    
-    # 3. LAYOUT PRINCIPAL - Grid dinámico sin colisiones
-    print("📋 Posicionando Management Groups y Subscriptions...")
-    
-    current_y = 50
-    
-    for mg_name, mg_data in sorted(management_groups.items()):
-        if mg_data['subscriptions']:
-            print(f"🏢 Management Group: {mg_name} ({len(mg_data['subscriptions'])} subs)")
-            
-            # Para cada subscription
-            for sub_id, sub_data in mg_data['subscriptions'].items():
-                print(f"   📁 Subscription: {sub_data['item'].get('name', sub_id)}")
-                
-                # 💡 ALGORITMO GRID DINÁMICO SIMPLIFICADO
-                rg_list = list(sub_data['resource_groups'].items())
-                num_rgs = len(rg_list)
-                
-                if num_rgs == 0:
-                    continue
-                
-                # Grid responsivo: más RGs = más columnas
-                if num_rgs <= 2:
-                    grid_cols = num_rgs
-                elif num_rgs <= 6:
-                    grid_cols = 3
-                elif num_rgs <= 12:
-                    grid_cols = 4
-                else:
-                    grid_cols = 5
-                
-                grid_rows = math.ceil(num_rgs / grid_cols)
-                
-                # Dimensiones dinámicas del subscription container 
-                # Usar dimensiones base para cálculo de distribución, pero permitir expansión
-                base_rg_width = 900   # Ancho base para posicionamiento
-                base_rg_height = 700  # Alto base para posicionamiento
-                grid_spacing_x = 120
-                grid_spacing_y = 140
-                
-                # Calcular tamaño del subscription considerando RGs grandes
-                sub_width = (grid_cols * base_rg_width) + ((grid_cols + 1) * grid_spacing_x) + 100
-                # Para altura, usar máximos posibles ya que RGs grandes pueden expandirse
-                max_rg_height = 1400  # Altura máxima posible de un RG
-                sub_height = (grid_rows * max_rg_height) + ((grid_rows + 1) * grid_spacing_y) + 150
-                
-                print(f"   📐 Grid {grid_cols}x{grid_rows} para {num_rgs} RGs → Container: {sub_width}x{sub_height}")
-                
-                # Crear subscription container
-                sub_group_id = f"group_subscription_{global_sub_counter}"
-                global_sub_counter += 1
-                
-                group_info.append({
-                    'id': sub_group_id,
-                    'parent_id': '1',
-                    'type': 'subscription_container',
-                    'x': 50,
-                    'y': current_y,
-                    'width': sub_width,
-                    'height': sub_height,
-                    'label': f'🏢 {sub_data["item"].get("name", "Subscription")}',
-                    'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;'
-                })
-                
-                # Posicionar subscription item
-                if sub_data['index'] is not None:
-                    node_positions[sub_data['index']] = (20, 25)
-                    resource_to_parent_id[sub_data['index']] = sub_group_id
-                
-                # Posicionar Resource Groups en grid perfecto
-                print(f"      📦 Distribuyendo {num_rgs} Resource Groups en grid...")
-                
-                for idx, (rg_id, rg_data) in enumerate(rg_list):
-                    # Calcular posición en grid
-                    grid_row = idx // grid_cols
-                    grid_col = idx % grid_cols
-                    
-                    # 💡 CALCULAR TAMAÑO DINÁMICO DEL RG SEGÚN CONTENIDO
-                    num_resources = len(rg_data['resources'])
-                    
-                    # Dimensiones dinámicas basadas en cantidad de recursos
-                    if num_resources <= 9:
-                        rg_width = 750
-                        rg_height = 650
-                    elif num_resources <= 20:
-                        rg_width = 900
-                        rg_height = 800
-                    elif num_resources <= 50:
-                        rg_width = 1200
-                        rg_height = 1000
-                    else:
-                        # Para RGs con muchos recursos (100+)
-                        rg_width = 1500
-                        rg_height = 1400
-                        # Grid especial para RGs grandes
-                        print(f"🔧 RG grande detectado: {num_resources} recursos - usando layout especial")
-                    
-                    # Posición absoluta sin colisiones
-                    rg_x = grid_spacing_x + (grid_col * (900 + grid_spacing_x))  # Usar ancho base para posición
-                    rg_y = 100 + grid_spacing_y + (grid_row * (700 + grid_spacing_y))  # Usar alto base para posición
-                    
-                    rg_group_id = f"group_rg_{global_rg_counter}"
-                    global_rg_counter += 1
-                    
-                    # Crear container del Resource Group con tamaño dinámico
-                    group_info.append({
-                        'id': rg_group_id,
-                        'parent_id': sub_group_id,
-                        'type': 'resource_group_container',
-                        'x': rg_x,
-                        'y': rg_y,
-                        'width': rg_width,
-                        'height': rg_height,
-                        'label': '',
-                        'style': 'container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#f9a825;fontSize=12;align=left;verticalAlign=top;'
-                    })
-                    
-                    # Posicionar el ícono del Resource Group
-                    if rg_data['index'] is not None:
-                        node_positions[rg_data['index']] = (15, 15)
-                        resource_to_parent_id[rg_data['index']] = rg_group_id
-                    
-                    # Posicionar recursos dentro del Resource Group con grid optimizado
-                    resources = rg_data['resources']
-                    if resources:
-                        print(f"🔧 RG {rg_data['item'].get('name', 'N/A')}: {len(resources)} recursos → {rg_width}x{rg_height}")
-                        
-                        # Grid optimizado según cantidad de recursos
-                        if num_resources <= 9:
-                            resources_per_row = 3
-                            resource_width = 120
-                            resource_height = 90
-                            resource_spacing_x = 80
-                            resource_spacing_y = 70
-                        elif num_resources <= 20:
-                            resources_per_row = 4
-                            resource_width = 110
-                            resource_height = 85
-                            resource_spacing_x = 70
-                            resource_spacing_y = 60
-                        elif num_resources <= 50:
-                            resources_per_row = 5
-                            resource_width = 100
-                            resource_height = 80
-                            resource_spacing_x = 60
-                            resource_spacing_y = 55
-                        else:
-                            # Para RGs con muchos recursos
-                            resources_per_row = 6
-                            resource_width = 90
-                            resource_height = 70
-                            resource_spacing_x = 50
-                            resource_spacing_y = 50
-                        
-                        start_x = 80
-                        start_y = 80
-                        
-                        for res_idx, (res_index, res_item) in enumerate(resources):
-                            res_row = res_idx // resources_per_row
-                            res_col = res_idx % resources_per_row
-                            
-                            res_x = start_x + (res_col * (resource_width + resource_spacing_x))
-                            res_y = start_y + (res_row * (resource_height + resource_spacing_y))
-                            
-                            node_positions[res_index] = (res_x, res_y)
-                            resource_to_parent_id[res_index] = rg_group_id
-                        
-                        print(f"   ✅ Posicionados {len(resources)} recursos en RG ({resources_per_row} por fila)")
-                
-                # Avanzar Y para próxima subscription
-                current_y += sub_height + 200
-    
-    # 4. VERIFICACIÓN FINAL DE COLISIONES
-    print("🔍 Verificando colisiones finales...")
-    collision_detector = CollisionDetector()
-    
-    for index, (x, y) in node_positions.items():
-        collision_detector.add_object(f"resource_{index}", x, y, 100, 80)
-    
-    final_collisions = collision_detector.detect_all_collisions()
-    if final_collisions:
-        print(f"⚠️  {len(final_collisions)} colisiones detectadas")
-        for obj1, obj2 in final_collisions[:5]:
-            print(f"⚠️  Colisión entre recursos: {obj1} ↔ {obj2}")
-        if len(final_collisions) > 5:
-            print(f"⚠️  ... y {len(final_collisions) - 5} colisiones más")
-    else:
-        print("✅ ¡Ninguna colisión detectada! Grid dinámico funcionando correctamente.")
-    
-    print(f"✅ Layout de red completado: {len(node_positions)} recursos posicionados")
-    
+            rg_abs_x = PADDING['left'] + rg_pos[0]
+            rg_abs_y = PADDING['top'] + rg_pos[1]
+
+            group_info.append({
+                'id': rg_group_id, 'parent_id': sub_group_id, 'type': 'rg_container',
+                'x': rg_abs_x, 'y': rg_abs_y,
+                'width': rg_size[0], 'height': rg_size[1],
+                'label': '', 'style': CONTAINER_STYLES['resource_group']
+            })
+            if rg_item_index is not None:
+                node_positions[rg_item_index] = (20, 20) # Relativo al padre
+                resource_to_parent_id[rg_item_index] = rg_group_id
+
+            # Posicionar contenido del RG
+            _position_rg_content(
+                rg_layout, rg_group_id, (rg_abs_x, rg_abs_y),
+                group_info, node_positions, resource_to_parent_id, items
+            )
+
+        current_y += sub_size[1] + PADDING['top'] + PADDING['bottom'] + RG_GRID_SPACING['y']
+
+    print("✅ Layout de red jerárquico completado.")
     return node_positions, group_info, resource_to_parent_id
 
+def _calculate_grid_layout(resource_indices: List[int], per_row: int) -> Dict[int, Tuple[int, int]]:
+    """Calcula posiciones en una grid simple para una lista de recursos."""
+    layout = {}
+    if not resource_indices:
+        return layout
+    
+    for i, res_index in enumerate(resource_indices):
+        row = i // per_row
+        col = i % per_row
+        x = col * RESOURCE_SPACING['x']
+        y = row * RESOURCE_SPACING['y']
+        layout[res_index] = (x, y)
+    return layout
 
-class CollisionDetector:
-    """Detector de colisiones simplificado"""
+def _get_required_size(layout: Dict, min_width: int, min_height: int) -> Tuple[int, int]:
+    """Calcula el tamaño necesario para albergar un layout de grid."""
+    if not layout:
+        return (min_width, min_height)
     
-    def __init__(self):
-        self.objects = {}
+    max_x = max(pos[0] for pos in layout.values()) if layout else 0
+    max_y = max(pos[1] for pos in layout.values()) if layout else 0
     
-    def add_object(self, obj_id, x, y, width, height):
-        self.objects[obj_id] = {'x': x, 'y': y, 'width': width, 'height': height}
+    width = max_x + PADDING['left'] + PADDING['right'] + 100 # 100 para el icono
+    height = max_y + PADDING['top'] + PADDING['bottom'] + 100
     
-    def detect_all_collisions(self):
-        collisions = []
-        objects_list = list(self.objects.items())
+    return (max(width, min_width), max(height, min_height))
+
+def _calculate_vnet_size(vnet_layout: Dict) -> Tuple[int, int]:
+    """Calcula el tamaño de un contenedor de VNet."""
+    # Calcular tamaño para subnets
+    subnet_layouts = vnet_layout['subnet_layouts']
+    subnet_positions, total_size = _calculate_container_grid_layout(
+        subnet_layouts,
+        lambda sl: sl['size'],
+        cols=1 # Subnets en una sola columna
+    )
+    
+    # Calcular tamaño para recursos directos
+    direct_res_size = _get_required_size(vnet_layout['direct_resources_layout'], 0, 0)
+    
+    # El ancho es el máximo entre subnets y recursos directos
+    # La altura es la suma
+    width = max(total_size[0], direct_res_size[0]) + PADDING['left'] + PADDING['right']
+    height = total_size[1] + direct_res_size[1] + VNET_SPACING['y']
+    
+    return (max(width, MIN_WIDTH['vnet']), max(height, MIN_HEIGHT['vnet']))
+
+def _calculate_rg_size(rg_layout: Dict) -> Tuple[int, int]:
+    """Calcula el tamaño de un contenedor de Resource Group."""
+    vnet_layouts = rg_layout['vnet_layouts']
+    vnet_positions, vnets_total_size = _calculate_container_grid_layout(
+        vnet_layouts,
+        lambda vl: _calculate_vnet_size(vl),
+        cols=1 # VNets en una sola columna
+    )
+    
+    standalone_size = _get_required_size(rg_layout['standalone_layout'], 0, 0)
+    
+    width = max(vnets_total_size[0], standalone_size[0]) + PADDING['left'] + PADDING['right']
+    height = vnets_total_size[1] + standalone_size[1] + VNET_SPACING['y']
+    
+    return (max(width, 0), max(height, MIN_HEIGHT['rg']))
+
+def _calculate_container_grid_layout(layouts: Dict, size_func, cols: int = 2) -> Tuple[Dict, Tuple[int, int]]:
+    """
+    Calcula posiciones y tamaño total para una grid de contenedores de tamaño variable.
+    """
+    if not layouts:
+        return {}, (0, 0)
+
+    positions = {}
+    row_heights = [0] * (len(layouts) // cols + 1)
+    current_x = [0] * len(row_heights)
+    
+    max_width = 0
+    current_y = 0
+    
+    items = list(layouts.items())
+    
+    row_widths = [0] * (len(items) // cols + 1)
+    col_widths = [0] * cols
+
+    # Primero, calcular el ancho máximo de cada columna
+    for i, (item_id, layout) in enumerate(items):
+        size = size_func(layout)
+        col = i % cols
+        col_widths[col] = max(col_widths[col], size[0])
+
+    total_grid_width = sum(col_widths) + (RG_GRID_SPACING['x'] * (cols -1))
+
+    # Ahora, posicionar
+    x_offsets = [0] * cols
+    for i in range(1, cols):
+        x_offsets[i] = x_offsets[i-1] + col_widths[i-1] + RG_GRID_SPACING['x']
+
+    y_offset = 0
+    row_max_height = 0
+
+    for i, (item_id, layout) in enumerate(items):
+        size = size_func(layout)
+        row = i // cols
+        col = i % cols
+
+        if col == 0 and i > 0:
+            y_offset += row_max_height + RG_GRID_SPACING['y']
+            row_max_height = 0
+
+        positions[item_id] = (x_offsets[col], y_offset)
+        row_max_height = max(row_max_height, size[1])
+
+    total_grid_height = y_offset + row_max_height
+
+    return positions, (total_grid_width, total_grid_height)
+
+
+def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positions, resource_to_parent_id, items):
+    """Posiciona todo el contenido (VNets, Subnets, Recursos) dentro de un RG."""
+    
+    vnet_layouts = rg_layout['vnet_layouts']
+    vnet_positions, vnets_total_size = _calculate_container_grid_layout(
+        vnet_layouts, lambda vl: _calculate_vnet_size(vl), cols=1
+    )
+    
+    current_y = PADDING['top']
+    vnet_counter = 0
+    for vnet_id, vnet_pos_in_rg in vnet_positions.items():
+        vnet_layout = vnet_layouts[vnet_id]
+        vnet_size = _calculate_vnet_size(vnet_layout)
+        vnet_item_index = vnet_layout.get('item_index')
+        vnet_name = items[vnet_item_index].get('name') if vnet_item_index is not None else "VNet"
         
-        for i, (id1, obj1) in enumerate(objects_list):
-            for id2, obj2 in objects_list[i+1:]:
-                if self._objects_overlap(obj1, obj2):
-                    collisions.append((id1, id2))
+        vnet_group_id = f"{rg_group_id}_vnet_{vnet_counter}"
+        vnet_counter += 1
         
-        return collisions
+        vnet_abs_x = rg_pos[0] + PADDING['left']
+        vnet_abs_y = rg_pos[1] + current_y
+        
+        group_info.append({
+            'id': vnet_group_id, 'parent_id': rg_group_id, 'type': 'vnet_container',
+            'x': PADDING['left'], 'y': current_y,
+            'width': vnet_size[0], 'height': vnet_size[1],
+            'label': '', 'style': CONTAINER_STYLES['vnet']
+        })
+        if vnet_item_index is not None:
+            node_positions[vnet_item_index] = (20, 20)
+            resource_to_parent_id[vnet_item_index] = vnet_group_id
+
+        # Posicionar contenido de la VNet
+        _position_vnet_content(
+            vnet_layout, vnet_group_id, (vnet_abs_x, vnet_abs_y),
+            group_info, node_positions, resource_to_parent_id, items
+        )
+        current_y += vnet_size[1] + VNET_SPACING['y']
+
+    # Posicionar recursos standalone
+    standalone_layout = rg_layout['standalone_layout']
+    for res_index, res_pos in standalone_layout.items():
+        node_positions[res_index] = (res_pos[0] + PADDING['left'], res_pos[1] + current_y)
+        resource_to_parent_id[res_index] = rg_group_id
+
+
+def _position_vnet_content(vnet_layout, vnet_group_id, vnet_pos, group_info, node_positions, resource_to_parent_id, items):
+    """Posiciona Subnets y recursos directos dentro de una VNet."""
     
-    def _objects_overlap(self, obj1, obj2):
-        return not (obj1['x'] + obj1['width'] <= obj2['x'] or 
-                   obj2['x'] + obj2['width'] <= obj1['x'] or
-                   obj1['y'] + obj1['height'] <= obj2['y'] or
-                   obj2['y'] + obj2['height'] <= obj1['y'])
+    subnet_layouts = vnet_layout['subnet_layouts']
+    subnet_positions, _ = _calculate_container_grid_layout(
+        subnet_layouts, lambda sl: sl['size'], cols=1
+    )
+    
+    current_y = PADDING['top']
+    subnet_counter = 0
+    for subnet_id, subnet_pos_in_vnet in subnet_positions.items():
+        subnet_layout_data = subnet_layouts[subnet_id]
+        subnet_size = subnet_layout_data['size']
+        subnet_item_index = subnet_layout_data.get('item_index')
+        subnet_name = items[subnet_item_index].get('name') if subnet_item_index is not None else "Subnet"
+        
+        subnet_group_id = f"{vnet_group_id}_subnet_{subnet_counter}"
+        subnet_counter += 1
+        
+        subnet_abs_x = vnet_pos[0] + PADDING['left']
+        subnet_abs_y = vnet_pos[1] + current_y
+        
+        group_info.append({
+            'id': subnet_group_id, 'parent_id': vnet_group_id, 'type': 'subnet_container',
+            'x': PADDING['left'], 'y': current_y,
+            'width': subnet_size[0], 'height': subnet_size[1],
+            'label': '', 'style': CONTAINER_STYLES['subnet']
+        })
+        if subnet_item_index is not None:
+            node_positions[subnet_item_index] = (20, 20)
+            resource_to_parent_id[subnet_item_index] = subnet_group_id
+
+        # Posicionar recursos de la subnet
+        for res_index, res_pos in subnet_layout_data['layout'].items():
+            node_positions[res_index] = (res_pos[0] + PADDING['left'], res_pos[1] + PADDING['top'])
+            resource_to_parent_id[res_index] = subnet_group_id
+            
+        current_y += subnet_size[1] + SUBNET_SPACING['y']
+
+    # Posicionar recursos directos de la VNet
+    direct_res_layout = vnet_layout['direct_resources_layout']
+    for res_index, res_pos in direct_res_layout.items():
+        node_positions[res_index] = (res_pos[0] + PADDING['left'], res_pos[1] + current_y)
+        resource_to_parent_id[res_index] = vnet_group_id
