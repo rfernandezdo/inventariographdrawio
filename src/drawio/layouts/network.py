@@ -111,6 +111,10 @@ def _find_subnet_for_resource(item: Dict, nic_to_subnet_map: Dict) -> Optional[s
             if nic_id in nic_to_subnet_map:
                 return nic_to_subnet_map[nic_id]
 
+    # 4. Asociación para servicios con VNet integration (App Services, Functions)
+    if 'virtualNetworkSubnetId' in props and props.get('virtualNetworkSubnetId'):
+        return props['virtualNetworkSubnetId']
+
     return None
 
 def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwargs) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
@@ -282,34 +286,39 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
             'label': '', 'style': CONTAINER_STYLES['subscription']
         })
         if sub_item_index is not None:
-            # Colocar el icono de la subscripción dentro del contenedor
-            node_positions[sub_item_index] = (PADDING['left'] + 20, current_y + 20)
+            # Colocar el icono de la subscripción dentro del contenedor, en la esquina superior izquierda
+            node_positions[sub_item_index] = (20, 20)
             resource_to_parent_id[sub_item_index] = sub_group_id
+
+        # Offset vertical para dejar espacio para el icono de la suscripción
+        content_start_y_sub = PADDING['top'] + 60
 
         rg_counter = 0
         for rg_id, rg_pos in rg_positions_in_sub.items():
             rg_layout = rg_layouts_for_sub[rg_id]
             rg_size = _calculate_rg_size(rg_layout)
             rg_item_index = rg_layout.get('item_index')
-            rg_name = items[rg_item_index].get('name') if rg_item_index is not None else "Resource Group"
             
             rg_group_id = f"{sub_group_id}_rg_{rg_counter}"
             rg_counter += 1
             
-            rg_abs_x = PADDING['left'] + rg_pos[0]
-            rg_abs_y = PADDING['top'] + rg_pos[1]
+            # Posición relativa al contenedor de la subscripción, con offset
+            rg_rel_x = rg_pos[0] + PADDING['left']
+            rg_rel_y = rg_pos[1] + content_start_y_sub
 
             group_info.append({
                 'id': rg_group_id, 'parent_id': sub_group_id, 'type': 'rg_container',
-                'x': rg_abs_x, 'y': rg_abs_y,
+                'x': rg_rel_x, 'y': rg_rel_y,
                 'width': rg_size[0], 'height': rg_size[1],
                 'label': '', 'style': CONTAINER_STYLES['resource_group']
             })
             if rg_item_index is not None:
-                node_positions[rg_item_index] = (20, 20) # Relativo al padre
+                node_positions[rg_item_index] = (20, 20) # Relativo al padre (RG container)
                 resource_to_parent_id[rg_item_index] = rg_group_id
 
-            # Posicionar contenido del RG
+            # Posicionar contenido del RG (pasando la posición absoluta)
+            rg_abs_x = PADDING['left'] + rg_rel_x
+            rg_abs_y = current_y + rg_rel_y
             _position_rg_content(
                 rg_layout, rg_group_id, (rg_abs_x, rg_abs_y),
                 group_info, node_positions, resource_to_parent_id, items
@@ -443,7 +452,10 @@ def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positi
         vnet_layouts, lambda vl: _calculate_vnet_size(vl), cols=1
     )
     
-    current_y = PADDING['top']
+    # Offset vertical para dejar espacio para el icono del RG en la parte superior.
+    content_start_y = PADDING['top'] + 60
+    current_y = content_start_y
+    
     vnet_counter = 0
     for vnet_id, vnet_pos_in_rg in vnet_positions.items():
         vnet_layout = vnet_layouts[vnet_id]
@@ -513,9 +525,12 @@ def _position_vnet_content(vnet_layout, vnet_group_id, vnet_pos, group_info, nod
             node_positions[subnet_item_index] = (20, 20)
             resource_to_parent_id[subnet_item_index] = subnet_group_id
 
+        # Offset vertical para dejar espacio para el icono de la subnet.
+        content_start_y_subnet = PADDING['top'] + 60
+
         # Posicionar recursos de la subnet
         for res_index, res_pos in subnet_layout_data['layout'].items():
-            node_positions[res_index] = (res_pos[0] + PADDING['left'], res_pos[1] + PADDING['top'])
+            node_positions[res_index] = (res_pos[0] + PADDING['left'], res_pos[1] + content_start_y_subnet)
             resource_to_parent_id[res_index] = subnet_group_id
             
         current_y += subnet_size[1] + SUBNET_SPACING['y']

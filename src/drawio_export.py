@@ -469,27 +469,37 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                 is_hierarchical = False
                 is_rg_to_subscription = False
                 is_resource_to_rg = False
+                is_vnet_peering = False
+
+                # Detectar peering entre VNets
+                source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
+                target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
+                
+                if source_item and target_item:
+                    source_type = source_item.get('type', '').lower()
+                    target_type = target_item.get('type', '').lower()
+                    
+                    # Es peering si ambos son VNets
+                    if (source_type == 'microsoft.network/virtualnetworks' and 
+                        target_type == 'microsoft.network/virtualnetworks'):
+                        is_vnet_peering = True
 
                 if page_info['mode'] == 'infrastructure' and tree_edges:
                     is_hierarchical = (source_id.lower(), target_id.lower()) in [(c.lower(), p.lower()) for c, p in tree_edges]
                     
-                    if is_hierarchical:
-                        source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
-                        target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
-                        
-                        if target_item and source_item:
-                            target_type = target_item.get('type', '').lower()
-                            source_type = source_item.get('type', '').lower()
-                            
-                            is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
-                                                     target_type == 'microsoft.resources/subscriptions')
+                    if is_hierarchical and source_item and target_item:
+                        is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
+                                                 target_type == 'microsoft.resources/subscriptions')
 
-                            is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
-                                               source_type not in ['microsoft.management/managementgroups', 
-                                                                 'microsoft.resources/subscriptions',
-                                                                 'microsoft.resources/subscriptions/resourcegroups'])
+                        is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                                           source_type not in ['microsoft.management/managementgroups', 
+                                                             'microsoft.resources/subscriptions',
+                                                             'microsoft.resources/subscriptions/resourcegroups'])
                 
-                if is_hierarchical and is_rg_to_subscription:
+                # Estilos específicos con VNet peering en primer lugar
+                if is_vnet_peering:
+                    style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#FF6B35;strokeWidth=3;dashed=0;"
+                elif is_hierarchical and is_rg_to_subscription:
                     style = "edgeStyle=entityRelationEdgeStyle;exitX=0.5;exitY=0;exitPerimeter=1;entryX=0.5;entryY=1;entryPerimeter=1;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
                 elif is_hierarchical and is_resource_to_rg:
                     style = "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
@@ -607,6 +617,47 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         for src_id, tgt_id in dependencies:
             if (src_id, tgt_id) not in hierarchical_pairs and (tgt_id, src_id) not in hierarchical_pairs:
                 edges_to_create.append((src_id, tgt_id))
+    elif diagram_mode == 'network' and no_hierarchy_edges:
+        print(f"🔗 Filtrando enlaces jerárquicos de {len(dependencies)} dependencias")
+        
+        # Crear diccionario de mapeo ID → tipo
+        id_to_type = {item['id'].lower(): item.get('type', '').lower() for item in items}
+        
+        for src_id, tgt_id in dependencies:
+            source_type = id_to_type.get(src_id.lower(), '')
+            target_type = id_to_type.get(tgt_id.lower(), '')
+            
+            if source_type and target_type:
+                # Excluir enlaces jerárquicos
+                has_rg_involvement = (
+                    source_type == 'microsoft.resources/subscriptions/resourcegroups' or 
+                    target_type == 'microsoft.resources/subscriptions/resourcegroups'
+                )
+                
+                is_vnet_subnet_link = (
+                    (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/virtualnetworks/subnets') or
+                    (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/virtualnetworks')
+                )
+                
+                network_hierarchy_patterns = [
+                    (source_type == 'microsoft.network/privateendpoints' and target_type == 'microsoft.network/virtualnetworks'),
+                    (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/privateendpoints'),
+                    (source_type == 'microsoft.network/privateendpoints' and target_type == 'microsoft.network/virtualnetworks/subnets'),
+                    (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/privateendpoints'),
+                    (source_type == 'microsoft.network/networkinterfaces' and target_type == 'microsoft.network/virtualnetworks'),
+                    (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/networkinterfaces'),
+                    (source_type == 'microsoft.network/networkinterfaces' and target_type == 'microsoft.network/virtualnetworks/subnets'),
+                    (source_type == 'microsoft.network/virtualnetworks/subnets' and target_type == 'microsoft.network/networkinterfaces'),
+                    (source_type == 'microsoft.network/privatednszones/virtualnetworklinks' and target_type == 'microsoft.network/virtualnetworks'),
+                    (source_type == 'microsoft.network/virtualnetworks' and target_type == 'microsoft.network/privatednszones/virtualnetworklinks'),
+                ]
+                
+                is_network_hierarchy_link = any(network_hierarchy_patterns)
+                
+                if not has_rg_involvement and not is_vnet_subnet_link and not is_network_hierarchy_link:
+                    edges_to_create.append((src_id, tgt_id))
+        
+        print(f"🔗 Conservando {len(edges_to_create)} enlaces de dependencias")
     else:
         edges_to_create = dependencies
     
@@ -622,21 +673,34 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
             is_hierarchical = (source_id, target_id) in tree_edges if tree_edges else False
             is_rg_to_subscription = False
             is_resource_to_rg = False
+            is_vnet_peering = False
 
-            if is_hierarchical:
-                source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
-                target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
-                if source_item and target_item:
-                    source_type = source_item.get('type', '').lower()
-                    target_type = target_item.get('type', '').lower()
-                    is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
-                                             target_type == 'microsoft.resources/subscriptions')
-                    is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
-                                       source_type not in ['microsoft.management/managementgroups', 
-                                                         'microsoft.resources/subscriptions',
-                                                         'microsoft.resources/subscriptions/resourcegroups'])
+            # Obtener items para clasificar la conexión
+            source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
+            target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
+            
+            # Detectar peering entre VNets
+            if source_item and target_item:
+                source_type = source_item.get('type', '').lower()
+                target_type = target_item.get('type', '').lower()
+                
+                # Es peering si ambos son VNets
+                if (source_type == 'microsoft.network/virtualnetworks' and 
+                    target_type == 'microsoft.network/virtualnetworks'):
+                    is_vnet_peering = True
 
-            if is_hierarchical and is_rg_to_subscription:
+            if is_hierarchical and source_item and target_item:
+                is_rg_to_subscription = (source_type == 'microsoft.resources/subscriptions/resourcegroups' and
+                                         target_type == 'microsoft.resources/subscriptions')
+                is_resource_to_rg = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                                   source_type not in ['microsoft.management/managementgroups', 
+                                                     'microsoft.resources/subscriptions',
+                                                     'microsoft.resources/subscriptions/resourcegroups'])
+
+            # Estilos específicos con VNet peering en primer lugar
+            if is_vnet_peering:
+                style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#FF6B35;strokeWidth=3;dashed=0;"
+            elif is_hierarchical and is_rg_to_subscription:
                 style = "edgeStyle=entityRelationEdgeStyle;exitX=0.5;exitY=0;exitPerimeter=1;entryX=0.5;entryY=1;entryPerimeter=1;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
             elif is_hierarchical and is_resource_to_rg:
                 style = "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"

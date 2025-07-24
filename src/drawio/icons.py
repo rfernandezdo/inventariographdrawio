@@ -39,7 +39,7 @@ AZURE_ICONS = {
     "microsoft.network/azurefirewalls": "img/lib/azure2/networking/Azure_Firewall.svg",
     "microsoft.network/azurefirewallpolicies": "img/lib/azure2/networking/Azure_Firewall_Policy.svg",
     "microsoft.network/bastionhosts": "img/lib/azure2/networking/Bastions.svg",
-    "microsoft.network/dnszones": "img/lib/azure2/networking/DNS_Zone.svg",
+    "microsoft.network/dnszones": "img/lib/azure2/networking/DNS_Zones.svg",
     "microsoft.network/dnszones/recordsets": "img/lib/azure2/networking/DNS_Record_Sets.svg",
     "microsoft.network/expressroutecircuits": "img/lib/azure2/networking/ExpressRoute_Circuits.svg",
     "microsoft.network/loadbalancers": "img/lib/azure2/networking/Load_Balancers.svg",
@@ -57,7 +57,7 @@ AZURE_ICONS = {
     "microsoft.network/virtualnetworkgateways/vpnconnections": "img/lib/azure2/networking/VPN_Connections.svg",
     "microsoft.operationsmanagement/solutions": "img/lib/mscae/Solutions.svg",
     "microsoft.operationalinsights/workspaces": "img/lib/azure2/analytics/Log_Analytics_Workspaces.svg",
-    "microsoft.portal/dashboards": "img/lib/azure2/general/Dashboard2.svg;"
+    "microsoft.portal/dashboards": "img/lib/azure2/general/Dashboard2.svg;",
     "microsoft.network/privatednszones": "img/lib/azure2/networking/DNS_Zones.svg",
     "microsoft.network/privatednszones/virtualnetworklinks": "img/lib/azure2/networking/Virtual_Network_Link.svg",
     "microsoft.recoveryservices/vaults": "img/lib/azure2/management_governance/Recovery_Services_Vaults.svg",

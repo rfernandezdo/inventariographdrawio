@@ -339,29 +339,44 @@ def _get_edge_style(page_info, tree_edges, source_id_lower, target_id_lower, ite
     """Determina el estilo de una arista según el tipo de conexión."""
     is_hierarchical = False
     is_rg_to_resource = False
+    is_vnet_peering = False
+    
+    # Buscar los items correspondientes
+    source_item = None
+    target_item = None
+    for item in items:
+        if item['id'].lower() == source_id_lower:
+            source_item = item
+        elif item['id'].lower() == target_id_lower:
+            target_item = item
+    
+    # Detectar peering entre VNets
+    if source_item and target_item:
+        source_type = source_item.get('type', '').lower()
+        target_type = target_item.get('type', '').lower()
+        
+        # Es peering si ambos son VNets
+        if (source_type == 'microsoft.network/virtualnetworks' and 
+            target_type == 'microsoft.network/virtualnetworks'):
+            is_vnet_peering = True
     
     if page_info['mode'] == 'infrastructure' and tree_edges:
         is_hierarchical = (source_id_lower, target_id_lower) in [(c, p) for c, p in tree_edges]
         
-        if is_hierarchical:
-            source_item = None
-            target_item = None
-            for item in items:
-                if item['id'].lower() == source_id_lower:
-                    source_item = item
-                elif item['id'].lower() == target_id_lower:
-                    target_item = item
+        if is_hierarchical and source_item and target_item:
+            target_type = target_item.get('type', '').lower()
+            source_type = source_item.get('type', '').lower()
             
-            if target_item and source_item:
-                target_type = target_item.get('type', '').lower()
-                source_type = source_item.get('type', '').lower()
-                
-                is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
-                                   source_type not in ['microsoft.management/managementgroups', 
-                                                     'microsoft.resources/subscriptions',
-                                                     'microsoft.resources/subscriptions/resourcegroups'])
+            is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                               source_type not in ['microsoft.management/managementgroups', 
+                                                 'microsoft.resources/subscriptions',
+                                                 'microsoft.resources/subscriptions/resourcegroups'])
     
-    if is_hierarchical and is_rg_to_resource:
+    # Estilos específicos con VNet peering en primer lugar
+    if is_vnet_peering:
+        # VNet Peering - línea naranja sólida gruesa
+        return "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#FF6B35;strokeWidth=3;dashed=0;"
+    elif is_hierarchical and is_rg_to_resource:
         return "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
     elif is_hierarchical:
         return "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"

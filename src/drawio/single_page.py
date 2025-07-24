@@ -300,33 +300,46 @@ def _get_edge_style(diagram_mode, tree_edges, source_id_lower, target_id_lower, 
     """Determina el estilo de una arista según el tipo de conexión."""
     is_hierarchical = False
     is_rg_to_resource = False
+    is_vnet_peering = False
+    
+    # Buscar los items correspondientes
+    source_item = None
+    target_item = None
+    for item in items:
+        if item['id'].lower() == source_id_lower:
+            source_item = item
+        elif item['id'].lower() == target_id_lower:
+            target_item = item
+    
+    # Detectar peering entre VNets
+    if source_item and target_item:
+        source_type = source_item.get('type', '').lower()
+        target_type = target_item.get('type', '').lower()
+        
+        # Es peering si ambos son VNets
+        if (source_type == 'microsoft.network/virtualnetworks' and 
+            target_type == 'microsoft.network/virtualnetworks'):
+            is_vnet_peering = True
     
     if diagram_mode == 'infrastructure' and tree_edges:
         is_hierarchical = (source_id_lower, target_id_lower) in [(c, p) for c, p in tree_edges]
         
         # Identificar si es una conexión RG → Resource específicamente
-        if is_hierarchical:
-            # Buscar los items correspondientes
-            source_item = None
-            target_item = None
-            for item in items:
-                if item['id'].lower() == source_id_lower:
-                    source_item = item
-                elif item['id'].lower() == target_id_lower:
-                    target_item = item
+        if is_hierarchical and source_item and target_item:
+            target_type = target_item.get('type', '').lower()
+            source_type = source_item.get('type', '').lower()
             
-            # Verificar si es RG → Resource (parent → child en tree_edges)
-            if target_item and source_item:
-                target_type = target_item.get('type', '').lower()
-                source_type = source_item.get('type', '').lower()
-                
-                # RG es el padre (target) y el recurso es el hijo (source)
-                is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
-                                   source_type not in ['microsoft.management/managementgroups', 
-                                                     'microsoft.resources/subscriptions',
-                                                     'microsoft.resources/subscriptions/resourcegroups'])
+            # RG es el padre (target) y el recurso es el hijo (source)
+            is_rg_to_resource = (target_type == 'microsoft.resources/subscriptions/resourcegroups' and 
+                               source_type not in ['microsoft.management/managementgroups', 
+                                                 'microsoft.resources/subscriptions',
+                                                 'microsoft.resources/subscriptions/resourcegroups'])
     
-    if is_hierarchical and is_rg_to_resource:
+    # Estilos específicos con VNet peering en primer lugar
+    if is_vnet_peering:
+        # VNet Peering - línea naranja sólida gruesa
+        return "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#FF6B35;strokeWidth=3;dashed=0;"
+    elif is_hierarchical and is_rg_to_resource:
         # Conexión RG → Resource - línea sólida RECTA
         return "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
     elif is_hierarchical:
