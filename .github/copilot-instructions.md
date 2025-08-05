@@ -40,6 +40,11 @@ El sistema soporta cuatro modos de visualización:
   - Clasificación automática por función de red (edge, connectivity, security)
   - Soporte para opción `--no-hierarchy-edges`
   - Posicionamiento inteligente de recursos en contenedores
+  - **Soporte Multi-Subnet para NSGs y Route Tables**:
+    - NSGs asociados a múltiples subnets aparecen como elemento original en RG + copias "(asignación)" en cada subnet
+    - Route Tables asociados a múltiples subnets aparecen como elemento original en RG + copias "(asignación)" en cada subnet
+    - IDs únicos para elementos virtuales (`--assignment-N`) para evitar conflictos en draw.io
+    - Metadatos incluidos: `_virtual_subnet_id`, `_original_index`, `_is_assignment`
 
 #### 4. All Mode (Multipágina)
 - **Propósito**: Todas las vistas en un solo archivo draw.io con páginas separadas
@@ -55,6 +60,29 @@ El sistema soporta cuatro modos de visualización:
   - Filtrado automático de dependencias en página Network (Clean)
 
 ## Funcionalidades Clave
+
+### Soporte Multi-Subnet para NSGs y Route Tables
+- **Problema resuelto**: NSGs y Route Tables pueden estar asociados a múltiples subnets simultáneamente
+- **Implementación**:
+  - **Elemento Original**: Permanece en su Resource Group de origen
+  - **Elementos de Asignación**: Copias virtuales "(asignación)" en cada subnet asociada
+  - **Detección automática**: Utiliza `properties.subnets[]` array de NSGs y Route Tables
+  - **IDs únicos**: Elementos virtuales usan sufijo `--assignment-N` para evitar conflictos
+- **Funciones clave**:
+  - `_find_all_subnets_for_nsg()`: Encuentra todas las subnets asociadas a un NSG
+  - `_find_all_subnets_for_route_table()`: Encuentra todas las subnets asociadas a una Route Table
+  - Sistema de elementos extendidos (`extended_items`) que incluye originales + virtuales
+- **Metadatos de elementos virtuales**:
+  ```python
+  virtual_element = {
+      'name': 'original-name (asignación)',
+      'id': 'original-id--assignment-N',
+      '_is_assignment': True,
+      '_virtual_subnet_id': 'subnet_id',
+      '_original_index': original_index
+  }
+  ```
+- **Arquitectura visual**: Representa correctamente la arquitectura Azure donde un NSG/RT está en RG pero "asignado" a múltiples subnets
 
 ### Modo All (Multipágina)
 - **Archivo único**: Todas las vistas en un solo archivo draw.io
@@ -106,13 +134,24 @@ El sistema soporta cuatro modos de visualización:
 ```
 Subscription Container
 ├── Resource Group Container (dinámicamente dimensionado)
+│   ├── NSG Original (cuando está asociado a múltiples subnets)
+│   ├── Route Table Original (cuando está asociado a múltiples subnets)
 │   ├── VNet Container (ancho: max(600px, contenido + 120px))
 │   │   ├── Subnet Container (centrado, margen mínimo 60px)
+│   │   │   ├── NSG (asignación) - solo si está asociado a esta subnet
+│   │   │   ├── Route Table (asignación) - solo si está asociado a esta subnet
 │   │   │   └── Recursos de Subnet (2 por fila, espaciado 150px)
 │   │   └── Recursos Directos VNet (3 por fila, espaciado 140px)
 │   └── Recursos Standalone RG (3 por fila, espaciado 120px)
 └── Management Panel (lateral, 300px ancho)
 ```
+
+### Gestión de Elementos Extendidos
+- **Array original (`items`)**: Recursos obtenidos de Azure API
+- **Array extendido (`extended_items`)**: Incluye elementos originales + virtuales de asignación
+- **Mapeo de posiciones**: `node_positions` usa índices de `extended_items`
+- **Contención**: `resource_to_parent_id` mapea elementos virtuales a sus contenedores apropiados
+- **Wrapper compatibility**: `generate_network_layout_wrapper()` maneja compatibilidad entre sistemas legacy y modular
 
 ### Cálculo de Dimensiones
 - **Resource Groups**: Dinámico basado en contenido, máximo 900x1200px
@@ -194,6 +233,64 @@ python src/cli.py --clear-cache                     # Limpiar caché
 
 ## Patrones de Código
 
+### Función de Layout de Red con Soporte Multi-Subnet
+```python
+def generate_network_layout(items, dependencies):
+    """
+    Genera layout de red con soporte para NSGs y Route Tables multi-subnet
+    
+    Returns:
+        tuple: (extended_items, node_positions, group_info, resource_to_parent_id)
+        - extended_items: Array que incluye elementos originales + virtuales
+        - node_positions: Posiciones de todos los elementos (índices de extended_items)
+        - group_info: Información de contenedores jerárquicos
+        - resource_to_parent_id: Mapeo elemento → contenedor padre
+    """
+    
+    # Detectar NSGs/RTs multi-subnet y crear elementos virtuales
+    for i, item in enumerate(items):
+        if item['type'].lower() == 'microsoft.network/networksecuritygroups':
+            subnets = _find_all_subnets_for_nsg(item, items)
+            for j, subnet_id in enumerate(subnets):
+                virtual_element = create_virtual_assignment(item, subnet_id, i, j)
+                extended_items.append(virtual_element)
+```
+
+### Detección de Subnets Asociadas
+```python
+def _find_all_subnets_for_nsg(nsg_item, all_items):
+    """
+    Encuentra todas las subnets asociadas a un NSG
+    
+    Args:
+        nsg_item: Elemento NSG con properties.subnets array
+        all_items: Lista completa de elementos para normalización de IDs
+    
+    Returns:
+        list: IDs normalizados de subnets asociadas
+    """
+    subnets = nsg_item.get('properties', {}).get('subnets', [])
+    return [normalize_subnet_id(subnet['id'], all_items) for subnet in subnets]
+```
+
+### Creación de Elementos Virtuales
+```python
+def create_virtual_assignment_element(original_item, subnet_id, original_index, assignment_index):
+    """
+    Crea elemento virtual de asignación para multi-subnet
+    
+    Returns:
+        dict: Elemento virtual con metadatos especiales
+    """
+    virtual_element = original_item.copy()
+    virtual_element['name'] = f"{original_item['name']} (asignación)"
+    virtual_element['id'] = f"{original_item['id']}--assignment-{assignment_index}"
+    virtual_element['_is_assignment'] = True
+    virtual_element['_virtual_subnet_id'] = subnet_id
+    virtual_element['_original_index'] = original_index
+    return virtual_element
+```
+
 ### Función Multipágina
 ```python
 def generate_drawio_multipage_file(items, dependencies, embed_data=True, include_ids=None, no_hierarchy_edges=False):
@@ -257,6 +354,21 @@ resource_to_parent_id[resource_index] = 'parent_container_id'
 - **`tests/layout/test_*.py`** - Tests específicos de layout
 - **`tests/fixtures/*.drawio`** - Casos de prueba de referencia
 
+### Archivos de Demostración Multi-Subnet
+- **`examples/demo_multi_subnet_generator.py`** - Generador de datos de demostración con NSGs y Route Tables multi-subnet
+- **`data/demo_multi_subnet_example.json`** - Datos de ejemplo con configuración multi-subnet realista
+- **`data/test_multi_subnet.json`** - Datos de prueba simples para validación básica
+
+### Casos de Prueba Multi-Subnet
+```bash
+# Test básico con datos de ejemplo
+python src/cli.py --input-json data/test_multi_subnet.json --diagram-mode network --all-tenants
+
+# Test con datos de demostración compleja
+python examples/demo_multi_subnet_generator.py
+python src/cli.py --input-json data/demo_multi_subnet_example.json --diagram-mode network --all-tenants
+```
+
 ### Validación Manual
 1. Generar diagrama: `python src/cli.py --diagram-mode network --output test.drawio`
 2. Abrir en draw.io y verificar:
@@ -266,6 +378,13 @@ resource_to_parent_id[resource_index] = 'parent_container_id'
    - Iconos correctos para cada tipo de recurso
    - Recursos "hidden" con estilo especial (cubo azul sombreado)
    - Con `--no-hierarchy-edges`: Solo ~21 enlaces funcionales (no jerárquicos)
+   - **Verificación Multi-Subnet**:
+     - NSGs originales en Resource Groups (sin sufijo "(asignación)")
+     - NSGs "(asignación)" dentro de subnets correspondientes
+     - Route Tables originales en Resource Groups
+     - Route Tables "(asignación)" dentro de subnets correspondientes
+     - IDs únicos para elementos virtuales (sufijo `--assignment-N`)
+     - Metadatos `_is_assignment`, `_virtual_subnet_id`, `_original_index` en elementos virtuales
 
 ### Validación de Dependencias
 1. Comparar modos: `python compare_dependencies.py`
@@ -280,6 +399,22 @@ resource_to_parent_id[resource_index] = 'parent_container_id'
 2. Agregar lógica de clasificación en `generate_network_layout()` si es necesario
 3. Actualizar tests correspondientes
 
+### Extender Soporte Multi-Subnet a Otros Recursos
+1. **Identificar tipo de recurso**: Determinar qué recursos Azure soportan asociaciones múltiples
+2. **Crear función de detección**: Similar a `_find_all_subnets_for_nsg()` pero adaptada al recurso
+3. **Añadir lógica en layout**: Incluir en el bucle de generación de elementos virtuales
+4. **Ejemplo para Application Security Groups**:
+   ```python
+   def _find_all_subnets_for_asg(asg_item, all_items):
+       # Lógica específica para ASGs
+       pass
+   
+   # En generate_network_layout():
+   elif item_type == 'microsoft.network/applicationsecuritygroups':
+       subnets = _find_all_subnets_for_asg(item, items)
+       # Crear elementos virtuales
+   ```
+
 ### Nuevos Modos de Diagrama
 1. Crear función `generate_{mode}_layout()` en `drawio_export.py`
 2. Actualizar `generate_drawio_file()` para incluir el nuevo modo
@@ -291,6 +426,32 @@ resource_to_parent_id[resource_index] = 'parent_container_id'
 - Mejorar algoritmos de layout para datasets grandes
 - Optimizar sistema de caché con compresión
 
+## Consideraciones de Seguridad y Datos Sensibles
+
+### Políticas de Datos
+- **Principio**: Nunca exponer datos reales de infraestructura en documentación pública o archivos trackeados por git
+- **Archivos permitidos con datos reales**: Solo en [`.azure_cache/`](.azure_cache/) (incluido en [`.gitignore`](.gitignore))
+- **Archivos públicos**: Deben usar solo datos ficticios claramente identificables
+
+### Datos que Deben Enmascararse
+- **Tenant IDs**: Usar valores ficticios como `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee`
+- **Subscription IDs**: Usar prefijos como `demo-subscription-001`
+- **Nombres organizacionales**: Usar nombres genéricos como "Corporativo Demo"
+- **IPs y rangos de red**: Usar rangos RFC 1918 estándar (10.0.0.0/16, etc.)
+- **Nombres de recursos**: Usar prefijos como `demo-`, `test-`, `example-`
+
+### Archivos a Verificar Regularmente
+- `README.md` - Ejemplos en documentación
+- `docs/*.md` - Toda la documentación
+- `src/cli.py` - Mensajes de ayuda y ejemplos
+- `examples/*.py` - Scripts de demostración
+- `data/*.json` - Archivos de datos de ejemplo (NO caché)
+
+### Procedimiento de Limpieza
+1. Buscar tenant IDs reales: `grep -r "df1b7014\|[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}" . --exclude-dir=.azure_cache`
+2. Buscar nombres organizacionales: `grep -r -i "organization\|company\|corp" . --exclude-dir=.azure_cache`
+3. Reemplazar con valores ficticios usando patrones consistentes
+
 ---
 
-**Nota**: Este proyecto maneja datos sensibles de infraestructura. Siempre usar archivos enmascarados para tests y documentación pública.
+**CRÍTICO**: Este proyecto maneja datos sensibles de infraestructura. Siempre usar archivos enmascarados para tests y documentación pública. Verificar regularmente que no se filtren datos reales en archivos trackeados por git.
