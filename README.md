@@ -8,7 +8,13 @@ Este proyecto permite generar diagramas automáticos de topologías y recursos d
 
 ## 🚀 Características Principales
 
-### 🌳 Algoritmo DFS Jerárquico Avanzado
+### � Filtrado por Tenant (NUEVO)
+- **Multi-tenant**: Soporte para filtrar recursos por Tenant ID específico
+- **Detección automática**: Usa el tenant actual del CLI de Azure por defecto
+- **Separación limpia**: Diagramas completamente separados por tenant
+- **Listado de tenants**: Muestra todos los tenants disponibles con sus suscripciones
+
+### �🌳 Algoritmo DFS Jerárquico Avanzado
 - **Árbol verdadero**: Implementación DFS que crea una estructura de árbol real (no solo niveles)
 - **Filtrado inteligente**: Separa dependencias estructurales de Azure vs relaciones de conectividad
 - **Escalabilidad probada**: Maneja >1000 recursos en <2 segundos (1,018 items/segundo)
@@ -113,7 +119,7 @@ az extension add --name resource-graph
 
 ## Uso Básico
 ```bash
-# Generar diagrama con todos los recursos
+# Generar diagrama con todos los recursos (usa tenant actual automáticamente)
 python src/cli.py
 
 # Generar en modo específico
@@ -125,6 +131,28 @@ python src/cli.py --export-json inventario.json
 # Usar datos offline
 python src/cli.py --input-json inventario.json --output diagrama_offline.drawio
 ```
+
+## 🏢 Filtrado por Tenant (NUEVO)
+```bash
+# Listar todos los tenants disponibles
+python src/cli.py --list-tenants
+
+# Filtrar por tenant específico
+python src/cli.py --tenant-filter aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+
+# Incluir todos los tenants (comportamiento anterior)
+python src/cli.py --all-tenants
+
+# Generar diagramas separados por tenant
+python src/cli.py --tenant-filter TENANT_A --output tenant_a.drawio
+python src/cli.py --tenant-filter TENANT_B --output tenant_b.drawio
+```
+
+**Beneficios del filtrado por tenant:**
+- ✅ Diagramas limpiamente separados por organización
+- ✅ Evita confusión en entornos multi-tenant
+- ✅ Detección automática del tenant actual (comportamiento por defecto)
+- ✅ Compatible con todos los modos de diagrama
 
 ## 📋 Modos de Diagrama
 
@@ -144,6 +172,9 @@ python src/cli.py --input-json inventario.json --output diagrama_offline.drawio
 - **Topología de red**: VNets, Subnets, Gateways, Firewalls
 
 ## Opciones Avanzadas
+- `--tenant-filter <TENANT_ID>`: Filtrar recursos por Tenant ID específico
+- `--all-tenants`: Incluir recursos de todos los tenants
+- `--list-tenants`: Listar todos los tenants disponibles
 - `--no-embed-data`: No incrusta todos los datos en los nodos
 - `--include-ids <id1> <id2>`: Solo incluye elementos específicos y sus descendientes
 - `--exclude-ids <id1> <id2>`: Excluye elementos específicos

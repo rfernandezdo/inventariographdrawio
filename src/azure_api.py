@@ -75,6 +75,65 @@ def load_from_cache(cache_type):
         print(f"ADVERTENCIA: Error leyendo cache {cache_file}: {e}")
         return None
 
+def get_current_tenant_id():
+    """Obtiene el Tenant ID actual del CLI de Azure."""
+    try:
+        cmd = ["az", "account", "show", "--query", "tenantId", "-o", "tsv"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        tenant_id = result.stdout.strip()
+        return tenant_id if tenant_id else None
+    except Exception as e:
+        print(f"ADVERTENCIA: No se pudo obtener el tenant actual: {e}")
+        return None
+
+def list_available_tenants():
+    """Lista todos los tenants disponibles desde el CLI de Azure."""
+    try:
+        cmd = ["az", "account", "list", "--query", "[].{name:name, tenantId:tenantId, subscriptionId:id}", "-o", "json"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        tenants = json.loads(result.stdout)
+        return tenants
+    except Exception as e:
+        print(f"ADVERTENCIA: No se pudieron obtener los tenants disponibles: {e}")
+        return []
+
+def filter_items_by_tenant(items, tenant_id):
+    """Filtra elementos por tenant ID."""
+    if not tenant_id:
+        return items
+        
+    print(f"INFO: Filtrando recursos por tenant: {tenant_id}")
+    original_count = len(items)
+    
+    filtered_items = []
+    for item in items:
+        item_tenant = item.get('tenantId')
+        if item_tenant == tenant_id:
+            filtered_items.append(item)
+        elif not item_tenant:
+            # Si no tiene tenantId, revisar si es un recurso nested (como subnets)
+            # que debería heredar el tenant de su padre
+            item_type = item.get('type', '').lower()
+            if item_type == 'microsoft.network/virtualnetworks/subnets':
+                # Para subnets, intentar determinar el tenant desde la VNet padre
+                vnet_id = item.get('vnetId', '')
+                if vnet_id:
+                    # Buscar la VNet en la lista de items
+                    vnet_item = next((i for i in items if i.get('id', '').lower() == vnet_id.lower()), None)
+                    if vnet_item and vnet_item.get('tenantId') == tenant_id:
+                        filtered_items.append(item)
+                        continue
+            
+            # Si no se pudo determinar el tenant, incluir por seguridad
+            print(f"ADVERTENCIA: Elemento sin tenantId incluido: {item.get('name', 'N/A')} ({item.get('type', 'N/A')})")
+            filtered_items.append(item)
+    
+    filtered_count = len(filtered_items)
+    if filtered_count != original_count:
+        print(f"INFO: Filtrado por tenant completado: {original_count} → {filtered_count} elementos")
+    
+    return filtered_items
+
 def clear_cache(cache_type=None):
     """Limpia el cache. Si cache_type es None, limpia todo."""
     ensure_cache_dir()
@@ -217,11 +276,15 @@ def run_az_graph_query_with_pagination(query, use_cache=True, cache_key=None):
     
     return all_results
 
-def get_azure_resources(use_cache=True, force_refresh=False):
-    """Obtiene todos los recursos de Azure con opciones de cache."""
+def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None):
+    """Obtiene todos los recursos de Azure con opciones de cache y filtrado por tenant."""
     if force_refresh:
         print("INFO: Forzando actualización, ignorando cache...")
         clear_cache()
+    
+    # Información del tenant
+    if tenant_filter:
+        print(f"INFO: Filtrando recursos por tenant: {tenant_filter}")
     
     print("INFO: Obteniendo management groups (REST API o PowerShell) y recursos con az graph query...")
     if not os.system("az version > " + ("nul" if os.name == 'nt' else "/dev/null 2>&1")) == 0:
@@ -251,7 +314,8 @@ def get_azure_resources(use_cache=True, force_refresh=False):
                         'name': subnet.get('name', 'unknown'),
                         'type': 'microsoft.network/virtualnetworks/subnets',
                         'properties': subnet,
-                        'vnetId': vnet_id
+                        'vnetId': vnet_id,
+                        'tenantId': vnet.get('tenantId')  # Heredar tenant de la VNet
                     }
                     extra_subnets.append(subnet_item)
         if extra_subnets:
@@ -260,9 +324,14 @@ def get_azure_resources(use_cache=True, force_refresh=False):
         all_items = mg_items + rest_items + extra_subnets
         print(f"INFO: Total de elementos combinados: {len(all_items)}")
         
+        # Aplicar filtrado por tenant si se especifica
+        if tenant_filter:
+            all_items = filter_items_by_tenant(all_items, tenant_filter)
+        
         # Guardar combinación final en cache si se está usando cache
         if use_cache:
-            save_to_cache(all_items, 'final_inventory')
+            cache_suffix = f"_{tenant_filter}" if tenant_filter else ""
+            save_to_cache(all_items, f'final_inventory{cache_suffix}')
             
         return all_items
     except Exception as e:

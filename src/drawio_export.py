@@ -141,9 +141,13 @@ def generate_components_layout_wrapper(items, dependencies, levels, mg_id_to_idx
 def generate_network_layout_wrapper(items, dependencies, levels=None, mg_id_to_idx=None, sub_id_to_idx=None, rg_id_to_idx=None):
     """Wrapper que usa módulos refactorizados cuando están disponibles"""
     if _MODULAR_AVAILABLE:
-        return _modular_network_layout(items, dependencies)
+        extended_items, node_positions, group_info, resource_to_parent_id = _modular_network_layout(items, dependencies)
+        # Devolver todos los valores incluyendo extended_items para soporte multi-subnet
+        return extended_items, node_positions, group_info, resource_to_parent_id
     else:
-        return generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        # Para la versión legacy, devolver items originales como primer valor
+        node_positions, group_info, resource_to_parent_id = generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        return items, node_positions, group_info, resource_to_parent_id
 
 def generate_drawio_multipage_file_wrapper(items, dependencies, embed_data=True, include_ids=None, no_hierarchy_edges=False):
     """Wrapper que usa módulos refactorizados cuando están disponibles"""
@@ -319,17 +323,19 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
         
         # Generar layout según el modo
         if page_info['mode'] == 'network':
-            node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(
+            extended_items, node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(
                 items, dependencies)
         elif page_info['mode'] == 'components':
+            extended_items = items  # Components no necesita elementos extendidos
             node_positions = generate_components_layout_wrapper(
                 items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
         else:  # 'infrastructure'
+            extended_items = items  # Infrastructure no necesita elementos extendidos
             node_positions, group_info, resource_to_parent_id, tree_edges = generate_infrastructure_layout_wrapper(
                 items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
         
         # Fallback de posicionamiento para nodos sin posición
-        for i, item in enumerate(items):
+        for i, item in enumerate(extended_items):
             if i not in node_positions:
                 node_positions[i] = ((i % 15) * 180, 1500 + (i // 15) * 150)
         
@@ -347,9 +353,25 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
             ET.SubElement(group_cell, "object", 
                          attrib={'label': group['label'], 'as': 'value'})
         
+        # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network)
+        items_to_render = []
+        original_to_filtered_index = {}
+        
+        for i, item in enumerate(extended_items):
+            # Filtrar Management Groups en modo network
+            if page_info['mode'] == 'network':
+                resource_type_lower = (item.get('type') or '').lower()
+                if resource_type_lower == 'microsoft.management/managementgroups':
+                    continue  # Saltear Management Groups en modo network
+            
+            # Mapear índice original al filtrado
+            filtered_index = len(items_to_render)
+            original_to_filtered_index[i] = filtered_index
+            items_to_render.append((i, item))
+        
         # Crear nodos de recursos
-        for i, item in enumerate(items):
-            cell_id = f"node-{i}"
+        for filtered_i, (original_i, item) in enumerate(items_to_render):
+            cell_id = f"node-{filtered_i}"
             azure_id_to_cell_id[item['id'].lower()] = cell_id
             style = get_node_style_wrapper(item.get('type'))
             
@@ -362,7 +384,7 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                     if 'image=' in style:
                         style = style.replace('align=center', 'align=left;labelPosition=right;verticalLabelPosition=middle;verticalAlign=middle')
             
-            parent_id = resource_to_parent_id.get(i, '1')
+            parent_id = resource_to_parent_id.get(original_i, '1')
             
             node_cell = ET.SubElement(root, "mxCell", 
                                     id=cell_id, 
@@ -370,7 +392,7 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                                     parent=parent_id, 
                                     vertex="1")
             
-            x_pos, y_pos = node_positions.get(i)
+            x_pos, y_pos = node_positions.get(original_i, (filtered_i * 180, 1500))
             width, height = ('60', '60') if parent_id != '1' else ('80', '80')
             
             ET.SubElement(node_cell, "mxGeometry", 
@@ -391,7 +413,9 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
         if page_info['mode'] == 'infrastructure' and tree_edges:
             # Usar conexiones del árbol jerárquico
             print(f"🔗 Página {page_info['name']}: Usando {len(tree_edges)} conexiones de árbol jerárquico")
-            item_id_to_idx = {item['id'].lower(): i for i, item in enumerate(items)}
+            item_id_to_idx = {}
+            for filtered_i, (original_i, item) in enumerate(items_to_render):
+                item_id_to_idx[item['id'].lower()] = filtered_i
             
             for child_id, parent_id in tree_edges:
                 if child_id in item_id_to_idx and parent_id in item_id_to_idx:
@@ -401,8 +425,10 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
             if page_info['mode'] == 'network' and use_no_hierarchy_edges:
                 print(f"🔗 Página {page_info['name']}: Filtrando enlaces jerárquicos de {len(dependencies)} dependencias")
                 
-                # Crear diccionario de mapeo ID → tipo
-                id_to_type = {item['id'].lower(): item.get('type', '').lower() for item in items}
+                # Crear diccionario de mapeo ID → tipo usando solo elementos filtrados
+                id_to_type = {}
+                for filtered_i, (original_i, item) in enumerate(items_to_render):
+                    id_to_type[item['id'].lower()] = item.get('type', '').lower()
                 
                 for src_id, tgt_id in dependencies:
                     source_type = id_to_type.get(src_id.lower(), '')
@@ -536,8 +562,16 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     from xml.dom import minidom
     print("INFO: Generando el archivo .drawio...")
     
+    # Establecer nombre de página según el modo del diagrama
+    page_names = {
+        'infrastructure': 'Infrastructure',
+        'network': 'Network',
+        'components': 'Components'
+    }
+    page_name = page_names.get(diagram_mode, 'Azure Infrastructure')
+    
     mxfile = ET.Element("mxfile", host="app.diagrams.net", agent="python-script")
-    diagram = ET.SubElement(mxfile, "diagram", id="main-diagram", name="Azure Infrastructure")
+    diagram = ET.SubElement(mxfile, "diagram", id="main-diagram", name=page_name)
     mxGraphModel = ET.SubElement(diagram, "mxGraphModel", dx="2500", dy="2000", grid="1", gridSize="10", guides="1", tooltips="1", connect="1", arrows="1", fold="1", page="1", pageScale="1", pageWidth="4681", pageHeight="3300")
     root = ET.SubElement(mxGraphModel, "root")
     ET.SubElement(root, "mxCell", id="0")
@@ -555,16 +589,17 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
 
     node_positions, group_info, resource_to_parent_id = {}, [], {}
     tree_edges = []  # Para almacenar las conexiones del árbol
+    extended_items = items  # Por defecto, usar items originales
     
     if diagram_mode == 'network':
-        node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(items, dependencies)
+        extended_items, node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(items, dependencies)
     elif diagram_mode == 'components':
         node_positions = generate_components_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     else: # 'infrastructure'
         node_positions, group_info, resource_to_parent_id, tree_edges = generate_infrastructure_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
 
     # Fallback de posicionamiento para nodos sin posición
-    for i, item in enumerate(items):
+    for i, item in enumerate(extended_items):
         if i not in node_positions:
             node_positions[i] = ((i % 15) * 180, 1500 + (i // 15) * 150)
 
@@ -574,9 +609,25 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         ET.SubElement(group_cell, "mxGeometry", attrib={'x': str(group['x']), 'y': str(group['y']), 'width': str(group['width']), 'height': str(group['height']), 'as': 'geometry'})
         ET.SubElement(group_cell, "object", attrib={'label': group['label'], 'as': 'value'})
 
+    # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network)
+    items_to_render = []
+    original_to_filtered_index = {}
+    
+    for i, item in enumerate(extended_items):
+        # Filtrar Management Groups en modo network
+        if diagram_mode == 'network':
+            resource_type_lower = (item.get('type') or '').lower()
+            if resource_type_lower == 'microsoft.management/managementgroups':
+                continue  # Saltear Management Groups en modo network
+        
+        # Mapear índice original al filtrado
+        filtered_index = len(items_to_render)
+        original_to_filtered_index[i] = filtered_index
+        items_to_render.append((i, item))
+
     # Crear nodos de recursos
-    for i, item in enumerate(items):
-        cell_id = f"node-{i}"
+    for filtered_i, (original_i, item) in enumerate(items_to_render):
+        cell_id = f"node-{filtered_i}"
         azure_id_to_cell_id[item['id'].lower()] = cell_id
         style = get_node_style_wrapper(item.get('type'))
         
@@ -590,11 +641,11 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
                 if 'image=' in style:
                     style = style.replace('align=center', 'align=left;labelPosition=right;verticalLabelPosition=middle;verticalAlign=middle')
         
-        parent_id = resource_to_parent_id.get(i, '1')
+        parent_id = resource_to_parent_id.get(original_i, '1')
         
         node_cell = ET.SubElement(root, "mxCell", id=cell_id, style=style, parent=parent_id, vertex="1")
         
-        x_pos, y_pos = node_positions.get(i)
+        x_pos, y_pos = node_positions.get(original_i)
         width, height = ('60', '60') if parent_id != '1' else ('80', '80')
         
         ET.SubElement(node_cell, "mxGeometry", attrib={'x': str(x_pos), 'y': str(y_pos), 'width': width, 'height': height, 'as': 'geometry'})
@@ -621,7 +672,7 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         print(f"🔗 Filtrando enlaces jerárquicos de {len(dependencies)} dependencias")
         
         # Crear diccionario de mapeo ID → tipo
-        id_to_type = {item['id'].lower(): item.get('type', '').lower() for item in items}
+        id_to_type = {item['id'].lower(): item.get('type', '').lower() for original_i, item in items_to_render}
         
         for src_id, tgt_id in dependencies:
             source_type = id_to_type.get(src_id.lower(), '')
@@ -676,8 +727,8 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
             is_vnet_peering = False
 
             # Obtener items para clasificar la conexión
-            source_item = next((item for item in items if item['id'].lower() == source_id_lower), None)
-            target_item = next((item for item in items if item['id'].lower() == target_id_lower), None)
+            source_item = next((item for original_i, item in items_to_render if item['id'].lower() == source_id_lower), None)
+            target_item = next((item for original_i, item in items_to_render if item['id'].lower() == target_id_lower), None)
             
             # Detectar peering entre VNets
             if source_item and target_item:

@@ -27,10 +27,10 @@ MIN_HEIGHT = {'rg': 300, 'vnet': 250, 'subnet': 200}
 
 # Estilos para los contenedores generados
 CONTAINER_STYLES = {
-    "subscription": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
-    "resource_group": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#f9a825;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
-    "vnet": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#4caf50;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
-    "subnet": "container=1;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ab47bc;fontSize=12;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;"
+"subscription": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;",
+"resource_group": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#90A4AE;dashed=1;dashPattern=8 4;labelBackgroundColor=none;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+"vnet": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=13;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+"subnet": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontSize=12;fontStyle=0;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;"    
 }
 
 def _get_parent_id(azure_id: str, level: str) -> Optional[str]:
@@ -83,6 +83,7 @@ def _organize_resources_by_hierarchy(items: List[Dict]) -> Dict:
 def _find_subnet_for_resource(item: Dict, nic_to_subnet_map: Dict) -> Optional[str]:
     """
     Determina el ID de la subnet para un recurso, ya sea por asociación directa o indirecta.
+    Para NSGs, retorna solo la primera subnet (usar _find_all_subnets_for_nsg para múltiples).
     """
     props = item.get('properties', {})
     item_type = (item.get('type') or '').lower()
@@ -96,7 +97,15 @@ def _find_subnet_for_resource(item: Dict, nic_to_subnet_map: Dict) -> Optional[s
         if 'properties' in ip_config and 'subnet' in ip_config.get('properties', {}) and ip_config['properties']['subnet'].get('id'):
             return ip_config['properties']['subnet']['id']
 
-    # 2. Asociación indirecta (vía NIC para VMs, etc.)
+    # 2. Asociación para Network Security Groups (NSG) - solo primera subnet
+    if item_type == 'microsoft.network/networksecuritygroups':
+        if 'subnets' in props and isinstance(props.get('subnets'), list) and props['subnets']:
+            # Tomar la primera subnet asociada 
+            first_subnet = props['subnets'][0]
+            if isinstance(first_subnet, dict) and 'id' in first_subnet:
+                return first_subnet['id']
+
+    # 3. Asociación indirecta (vía NIC para VMs, etc.)
     if 'networkProfile' in props and isinstance(props.get('networkProfile'), dict) and isinstance(props['networkProfile'].get('networkInterfaces'), list):
         for nic_ref in props['networkProfile']['networkInterfaces']:
             if isinstance(nic_ref, dict) and 'id' in nic_ref:
@@ -104,20 +113,55 @@ def _find_subnet_for_resource(item: Dict, nic_to_subnet_map: Dict) -> Optional[s
                 if nic_id in nic_to_subnet_map:
                     return nic_to_subnet_map[nic_id]
 
-    # 3. Asociación para Private Endpoints (que tienen su propia NIC)
+    # 4. Asociación para Private Endpoints (que tienen su propia NIC)
     if item_type == 'microsoft.network/privateendpoints':
         if 'networkInterfaces' in props and isinstance(props.get('networkInterfaces'), list) and props['networkInterfaces']:
             nic_id = props['networkInterfaces'][0].get('id', '').lower()
             if nic_id in nic_to_subnet_map:
                 return nic_to_subnet_map[nic_id]
 
-    # 4. Asociación para servicios con VNet integration (App Services, Functions)
+    # 5. Asociación para servicios con VNet integration (App Services, Functions)
     if 'virtualNetworkSubnetId' in props and props.get('virtualNetworkSubnetId'):
         return props['virtualNetworkSubnetId']
 
     return None
 
-def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwargs) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], Dict[int, str]]:
+
+def _find_all_subnets_for_nsg(item: Dict) -> List[str]:
+    """
+    Encuentra todas las subnets asociadas a un NSG.
+    """
+    props = item.get('properties', {})
+    item_type = (item.get('type') or '').lower()
+    
+    if item_type == 'microsoft.network/networksecuritygroups':
+        if 'subnets' in props and isinstance(props.get('subnets'), list):
+            subnet_ids = []
+            for subnet_ref in props['subnets']:
+                if isinstance(subnet_ref, dict) and 'id' in subnet_ref:
+                    subnet_ids.append(subnet_ref['id'])
+            return subnet_ids
+    
+    return []
+
+def _find_all_subnets_for_route_table(item: Dict) -> List[str]:
+    """
+    Encuentra todas las subnets asociadas a una Route Table.
+    """
+    props = item.get('properties', {})
+    item_type = (item.get('type') or '').lower()
+    
+    if item_type == 'microsoft.network/routetables':
+        if 'subnets' in props and isinstance(props.get('subnets'), list):
+            subnet_ids = []
+            for subnet_ref in props['subnets']:
+                if isinstance(subnet_ref, dict) and 'id' in subnet_ref:
+                    subnet_ids.append(subnet_ref['id'])
+            return subnet_ids
+    
+    return []
+
+def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwargs) -> Tuple[List[Dict], Dict[int, Tuple[int, int]], List[Dict], Dict[int, str]]:
     """
     Genera un layout de red jerárquico y sin colisiones.
     """
@@ -127,13 +171,73 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
     node_positions = {}
     resource_to_parent_id = {}
     
-    item_map = {item['id'].lower(): (i, item) for i, item in enumerate(items)}
+    # Crear elementos virtuales para NSGs y Route Tables que aparecen en múltiples subnets
+    extended_items = items.copy()
+    nsg_virtual_instances = {}  # {original_index: [virtual_indexes]}
+    rt_virtual_instances = {}   # {original_index: [virtual_indexes]}
+    
+    for i, item in enumerate(items):
+        item_type = (item.get('type') or '').lower()
+        
+        # Procesar NSGs con múltiples subnets
+        if item_type == 'microsoft.network/networksecuritygroups':
+            subnet_ids = _find_all_subnets_for_nsg(item)
+            if len(subnet_ids) > 1:
+                # NSG con múltiples subnets - crear instancias virtuales para TODAS las subnets
+                virtual_indexes = []
+                for j, subnet_id in enumerate(subnet_ids):
+                    # Crear instancias virtuales para todas las subnets (incluida la primera)
+                    virtual_item = item.copy()
+                    virtual_item['_virtual_subnet_id'] = subnet_id.lower()
+                    virtual_item['_original_index'] = i
+                    virtual_item['_is_assignment'] = True
+                    
+                    # Modificar el ID y nombre para que sean únicos
+                    original_id = virtual_item['id']
+                    original_name = virtual_item.get('name', '')
+                    
+                    virtual_item['id'] = f"{original_id}--assignment-{j}"
+                    virtual_item['name'] = f"{original_name} (asignación)"
+                    
+                    virtual_index = len(extended_items)
+                    extended_items.append(virtual_item)
+                    virtual_indexes.append(virtual_index)
+                    
+                nsg_virtual_instances[i] = virtual_indexes
+        
+        # Procesar Route Tables con múltiples subnets
+        elif item_type == 'microsoft.network/routetables':
+            subnet_ids = _find_all_subnets_for_route_table(item)
+            if len(subnet_ids) > 1:
+                # Route Table con múltiples subnets - crear instancias virtuales para TODAS las subnets
+                virtual_indexes = []
+                for j, subnet_id in enumerate(subnet_ids):
+                    # Crear instancias virtuales para todas las subnets
+                    virtual_item = item.copy()
+                    virtual_item['_virtual_subnet_id'] = subnet_id.lower()
+                    virtual_item['_original_index'] = i
+                    virtual_item['_is_assignment'] = True
+                    
+                    # Modificar el ID y nombre para que sean únicos
+                    original_id = virtual_item['id']
+                    original_name = virtual_item.get('name', '')
+                    
+                    virtual_item['id'] = f"{original_id}--assignment-{j}"
+                    virtual_item['name'] = f"{original_name} (asignación)"
+                    
+                    virtual_index = len(extended_items)
+                    extended_items.append(virtual_item)
+                    virtual_indexes.append(virtual_index)
+                    
+                rt_virtual_instances[i] = virtual_indexes
+    
+    item_map = {item['id'].lower(): (i, item) for i, item in enumerate(extended_items)}
     
     # 1. Organizar recursos por jerarquía
     subs = {}
     # Pre-construir mapa de NICs a subnets para una búsqueda más rápida
     nic_to_subnet_map = {}
-    for i, item in enumerate(items):
+    for i, item in enumerate(extended_items):
         item_type = (item.get('type') or '').lower()
         if item_type == 'microsoft.network/networkinterfaces':
             props = item.get('properties', {})
@@ -142,7 +246,7 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
                 if 'properties' in ip_config and 'subnet' in ip_config.get('properties', {}) and ip_config['properties']['subnet'].get('id'):
                     nic_to_subnet_map[item['id'].lower()] = ip_config['properties']['subnet']['id'].lower()
 
-    for i, item in enumerate(items):
+    for i, item in enumerate(extended_items):
         item_id = item['id'].lower()
         item_type = (item.get('type') or '').lower()
         
@@ -173,7 +277,7 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
                     subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][item_id]['item_index'] = i
     
     # Asociar todos los recursos a su contenedor correcto
-    for i, item in enumerate(items):
+    for i, item in enumerate(extended_items):
         item_id = item['id'].lower()
         item_type = (item.get('type') or '').lower()
 
@@ -181,6 +285,47 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
         if item_type in ['microsoft.resources/subscriptions', 'microsoft.resources/subscriptions/resourcegroups', 'microsoft.network/virtualnetworks', 'microsoft.network/virtualnetworks/subnets']:
             continue
 
+        # Manejo especial para NSGs que pueden estar en múltiples subnets
+        if item_type == 'microsoft.network/networksecuritygroups':
+            # Verificar si es una instancia virtual con subnet específica
+            if '_virtual_subnet_id' in item:
+                # Es una instancia virtual - asociarla solo a su subnet específica
+                subnet_id = item['_virtual_subnet_id']
+                vnet_id = _get_parent_id(subnet_id, 'vnet')
+                rg_id = _get_parent_id(vnet_id, 'rg') if vnet_id else None
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                
+                if sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups'] and vnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'] and subnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets']:
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][subnet_id]['resources'].append(i)
+            else:
+                # NSG original - SIEMPRE va como standalone en su RG, sin importar las subnets
+                rg_id = _get_parent_id(item_id, 'rg')
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                if rg_id and sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups']:
+                    subs[sub_id]['resource_groups'][rg_id]['standalone_resources'].append(i)
+            continue  # Saltar el procesamiento normal para NSGs
+
+        # Manejo especial para Route Tables que pueden estar en múltiples subnets
+        if item_type == 'microsoft.network/routetables':
+            # Verificar si es una instancia virtual con subnet específica
+            if '_virtual_subnet_id' in item:
+                # Es una instancia virtual - asociarla solo a su subnet específica
+                subnet_id = item['_virtual_subnet_id']
+                vnet_id = _get_parent_id(subnet_id, 'vnet')
+                rg_id = _get_parent_id(vnet_id, 'rg') if vnet_id else None
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                
+                if sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups'] and vnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'] and subnet_id in subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets']:
+                    subs[sub_id]['resource_groups'][rg_id]['vnets'][vnet_id]['subnets'][subnet_id]['resources'].append(i)
+            else:
+                # Route Table original - SIEMPRE va como standalone en su RG, sin importar las subnets
+                rg_id = _get_parent_id(item_id, 'rg')
+                sub_id = _get_parent_id(rg_id, 'sub') if rg_id else None
+                if rg_id and sub_id and sub_id in subs and rg_id in subs[sub_id]['resource_groups']:
+                    subs[sub_id]['resource_groups'][rg_id]['standalone_resources'].append(i)
+            continue  # Saltar el procesamiento normal para Route Tables
+
+        # Procesamiento normal para otros tipos de recursos
         subnet_id = _find_subnet_for_resource(item, nic_to_subnet_map)
         
         if subnet_id:
@@ -252,45 +397,66 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
             }
         subscription_layouts[sub_id] = {'rg_layouts': rg_layouts}
 
-    # 3. Posicionar todo (top-down)
-    current_y = PADDING['top']
-    sub_counter = 0
+    # 3. Agrupar suscripciones por tenant para evitar mezclas
+    tenant_groups = {}
     for sub_id, sub_layout_data in subscription_layouts.items():
-        
-        # Calcular tamaño total de la subscripción
+        # Buscar el item de subscripción para obtener el tenantId
         sub_item_index, sub_item = item_map.get(sub_id, (None, None))
         if not sub_item:
             # Si no encontramos el item de subscripción, buscamos uno por el ID
             for i, item in enumerate(items):
                 if item['id'].lower() == sub_id:
                     sub_item_index = i
+                    sub_item = item
                     break
         
-        sub_name = items[sub_item_index].get('name') if sub_item_index is not None else sub_id.split('/')[-1]
-
-        rg_layouts_for_sub = sub_layout_data.get('rg_layouts', {})
-        rg_positions_in_sub, sub_size = _calculate_container_grid_layout(
-            rg_layouts_for_sub, 
-            lambda rg_layout: _calculate_rg_size(rg_layout)
-        )
-
-        # Crear container de Subscription
-        sub_group_id = f"group_sub_{sub_counter}"
-        sub_counter += 1
+        tenant_id = sub_item.get('tenantId', 'unknown') if sub_item else 'unknown'
         
-        group_info.append({
-            'id': sub_group_id, 'parent_id': '1', 'type': 'subscription_container',
-            'x': PADDING['left'], 'y': current_y,
-            'width': sub_size[0] + PADDING['left'] + PADDING['right'], 
-            'height': sub_size[1] + PADDING['top'] + PADDING['bottom'],
-            'label': '', 'style': CONTAINER_STYLES['subscription']
-        })
-        if sub_item_index is not None:
-            # Colocar el icono de la subscripción dentro del contenedor, en la esquina superior izquierda
-            node_positions[sub_item_index] = (20, 20)
-            resource_to_parent_id[sub_item_index] = sub_group_id
+        if tenant_id not in tenant_groups:
+            tenant_groups[tenant_id] = []
+        tenant_groups[tenant_id].append((sub_id, sub_layout_data, sub_item_index, sub_item))
 
-        # Offset vertical para dejar espacio para el icono de la suscripción
+    # 4. Posicionar todo (agrupado por tenant)
+    current_x = PADDING['left']
+    tenant_counter = 0
+    
+    for tenant_id, tenant_subs in tenant_groups.items():
+        print(f"🏢 Posicionando tenant {tenant_id} con {len(tenant_subs)} suscripciones")
+        
+        current_y = PADDING['top']
+        max_tenant_width = 0
+        sub_counter = 0
+        
+        for sub_id, sub_layout_data, sub_item_index, sub_item in tenant_subs:
+
+            sub_name = sub_item.get('name') if sub_item else sub_id.split('/')[-1]
+
+            rg_layouts_for_sub = sub_layout_data.get('rg_layouts', {})
+            rg_positions_in_sub, sub_size = _calculate_container_grid_layout(
+                rg_layouts_for_sub, 
+                lambda rg_layout: _calculate_rg_size(rg_layout)
+            )
+
+            # Crear container de Subscription posicionado por tenant
+            sub_group_id = f"group_sub_{sub_counter}"
+            sub_counter += 1
+            
+            sub_width = sub_size[0] + PADDING['left'] + PADDING['right']
+            sub_height = sub_size[1] + PADDING['top'] + PADDING['bottom']
+            
+            group_info.append({
+                'id': sub_group_id, 'parent_id': '1', 'type': 'subscription_container',
+                'x': current_x, 'y': current_y,
+                'width': sub_width, 'height': sub_height,
+                'label': '', 'style': CONTAINER_STYLES['subscription']
+            })
+            if sub_item_index is not None:
+                # Colocar el icono de la subscripción dentro del contenedor, en la esquina superior izquierda
+                node_positions[sub_item_index] = (20, 20)
+                resource_to_parent_id[sub_item_index] = sub_group_id
+
+            # Actualizar máximo ancho del tenant para calcular el próximo offset x
+            max_tenant_width = max(max_tenant_width, sub_width)        # Offset vertical para dejar espacio para el icono de la suscripción
         content_start_y_sub = PADDING['top'] + 60
 
         rg_counter = 0
@@ -321,13 +487,13 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
             rg_abs_y = current_y + rg_rel_y
             _position_rg_content(
                 rg_layout, rg_group_id, (rg_abs_x, rg_abs_y),
-                group_info, node_positions, resource_to_parent_id, items
+                group_info, node_positions, resource_to_parent_id, extended_items
             )
 
         current_y += sub_size[1] + PADDING['top'] + PADDING['bottom'] + RG_GRID_SPACING['y']
 
     print("✅ Layout de red jerárquico completado.")
-    return node_positions, group_info, resource_to_parent_id
+    return extended_items, node_positions, group_info, resource_to_parent_id
 
 def _calculate_grid_layout(resource_indices: List[int], per_row: int) -> Dict[int, Tuple[int, int]]:
     """Calcula posiciones en una grid simple para una lista de recursos."""
@@ -444,7 +610,7 @@ def _calculate_container_grid_layout(layouts: Dict, size_func, cols: int = 2) ->
     return positions, (total_grid_width, total_grid_height)
 
 
-def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positions, resource_to_parent_id, items):
+def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positions, resource_to_parent_id, extended_items):
     """Posiciona todo el contenido (VNets, Subnets, Recursos) dentro de un RG."""
     
     vnet_layouts = rg_layout['vnet_layouts']
@@ -461,7 +627,7 @@ def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positi
         vnet_layout = vnet_layouts[vnet_id]
         vnet_size = _calculate_vnet_size(vnet_layout)
         vnet_item_index = vnet_layout.get('item_index')
-        vnet_name = items[vnet_item_index].get('name') if vnet_item_index is not None else "VNet"
+        vnet_name = extended_items[vnet_item_index].get('name') if vnet_item_index is not None else "VNet"
         
         vnet_group_id = f"{rg_group_id}_vnet_{vnet_counter}"
         vnet_counter += 1
@@ -482,7 +648,7 @@ def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positi
         # Posicionar contenido de la VNet
         _position_vnet_content(
             vnet_layout, vnet_group_id, (vnet_abs_x, vnet_abs_y),
-            group_info, node_positions, resource_to_parent_id, items
+            group_info, node_positions, resource_to_parent_id, extended_items
         )
         current_y += vnet_size[1] + VNET_SPACING['y']
 
@@ -493,7 +659,7 @@ def _position_rg_content(rg_layout, rg_group_id, rg_pos, group_info, node_positi
         resource_to_parent_id[res_index] = rg_group_id
 
 
-def _position_vnet_content(vnet_layout, vnet_group_id, vnet_pos, group_info, node_positions, resource_to_parent_id, items):
+def _position_vnet_content(vnet_layout, vnet_group_id, vnet_pos, group_info, node_positions, resource_to_parent_id, extended_items):
     """Posiciona Subnets y recursos directos dentro de una VNet."""
     
     subnet_layouts = vnet_layout['subnet_layouts']
@@ -507,7 +673,7 @@ def _position_vnet_content(vnet_layout, vnet_group_id, vnet_pos, group_info, nod
         subnet_layout_data = subnet_layouts[subnet_id]
         subnet_size = subnet_layout_data['size']
         subnet_item_index = subnet_layout_data.get('item_index')
-        subnet_name = items[subnet_item_index].get('name') if subnet_item_index is not None else "Subnet"
+        subnet_name = extended_items[subnet_item_index].get('name') if subnet_item_index is not None else "Subnet"
         
         subnet_group_id = f"{vnet_group_id}_subnet_{subnet_counter}"
         subnet_counter += 1

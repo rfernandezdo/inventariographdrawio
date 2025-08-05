@@ -92,17 +92,21 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     tree_edges = []  # Para almacenar las conexiones del árbol
     
     if diagram_mode == 'network':
-        node_positions, group_info, resource_to_parent_id = generate_network_layout(
+        extended_items, node_positions, group_info, resource_to_parent_id = generate_network_layout(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        # Usar extended_items para generar el XML, pero mantener items original para compatibilidad
+        render_items = extended_items
     elif diagram_mode == 'components':
+        render_items = items
         node_positions = generate_components_layout(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     else:  # 'infrastructure'
+        render_items = items
         node_positions, group_info, resource_to_parent_id, tree_edges = generate_infrastructure_layout(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
 
     # Fallback de posicionamiento para nodos sin posición
-    for i, item in enumerate(items):
+    for i, item in enumerate(render_items):
         if i not in node_positions:
             node_positions[i] = ((i % 15) * 180, 1500 + (i // 15) * 150)
 
@@ -110,11 +114,11 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     _create_containers(root, group_info)
 
     # Crear nodos de recursos
-    _create_resource_nodes(root, items, node_positions, resource_to_parent_id, 
+    _create_resource_nodes(root, render_items, node_positions, resource_to_parent_id, 
                           azure_id_to_cell_id, get_node_style, diagram_mode, embed_data)
 
     # Crear dependencias (flechas)
-    _create_edges(root, diagram_mode, tree_edges, dependencies, items, 
+    _create_edges(root, diagram_mode, tree_edges, dependencies, render_items, 
                  azure_id_to_cell_id, no_hierarchy_edges)
             
     return pretty_print_xml(mxfile)

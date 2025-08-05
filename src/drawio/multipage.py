@@ -146,17 +146,20 @@ def _generate_page(mxfile, page_info, items, dependencies, embed_data, get_node_
     use_no_hierarchy_edges = page_info.get('no_hierarchy_edges', False)
     
     if page_info['mode'] == 'network':
-        node_positions, group_info, resource_to_parent_id = network_layout_func(
+        extended_items, node_positions, group_info, resource_to_parent_id = network_layout_func(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+        render_items = extended_items
     elif page_info['mode'] == 'components':
+        render_items = items
         node_positions = components_layout_func(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     else:  # 'infrastructure'
+        render_items = items
         node_positions, group_info, resource_to_parent_id, tree_edges = infra_layout_func(
             items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
     
     # Fallback de posicionamiento para nodos sin posición
-    for i, item in enumerate(items):
+    for i, item in enumerate(render_items):
         if i not in node_positions:
             node_positions[i] = ((i % 15) * 180, 1500 + (i // 15) * 150)
     
@@ -164,11 +167,11 @@ def _generate_page(mxfile, page_info, items, dependencies, embed_data, get_node_
     _create_containers(root, group_info)
     
     # Crear nodos de recursos
-    _create_resource_nodes(root, items, node_positions, resource_to_parent_id, 
+    _create_resource_nodes(root, render_items, node_positions, resource_to_parent_id, 
                           azure_id_to_cell_id, get_node_style_func, page_info, embed_data)
     
     # Crear dependencias (flechas)
-    _create_edges(root, page_info, tree_edges, dependencies, items, azure_id_to_cell_id, use_no_hierarchy_edges)
+    _create_edges(root, page_info, tree_edges, dependencies, render_items, azure_id_to_cell_id, use_no_hierarchy_edges)
 
 
 def _create_containers(root, group_info):

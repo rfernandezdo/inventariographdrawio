@@ -1,0 +1,272 @@
+{
+  "items": [
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/demo-mg-corp",
+      "type": "Microsoft.Management/managementGroups",
+      "name": "demo-mg-corp",
+      "properties": {
+        "displayName": "Corporativo Demo",
+        "tenantId": "demo-tenant-001"
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001",
+      "type": "Microsoft.Resources/subscriptions",
+      "name": "demo-subscription-001",
+      "properties": {
+        "subscriptionId": "demo-subscription-001",
+        "displayName": "Suscripción Demo Networking"
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking",
+      "type": "Microsoft.Resources/subscriptions/resourceGroups",
+      "name": "demo-rg-networking",
+      "location": "eastus",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-compute",
+      "type": "Microsoft.Resources/subscriptions/resourceGroups",
+      "name": "demo-rg-compute",
+      "location": "eastus",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "demo-vnet-main",
+      "location": "eastus",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": []
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "demo-vnet-secondary",
+      "location": "eastus",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.1.0.0/16"
+          ]
+        },
+        "subnets": []
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-web",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "demo-subnet-web",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "networkSecurityGroup": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-web-tier"
+        },
+        "routeTable": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-frontend"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-app",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "demo-subnet-app",
+      "properties": {
+        "addressPrefix": "10.0.2.0/24",
+        "networkSecurityGroup": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-web-tier"
+        },
+        "routeTable": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-frontend"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-data",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "demo-subnet-data",
+      "properties": {
+        "addressPrefix": "10.0.3.0/24",
+        "networkSecurityGroup": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-data-tier"
+        },
+        "routeTable": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-backend"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary/subnets/demo-subnet-backup",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "demo-subnet-backup",
+      "properties": {
+        "addressPrefix": "10.1.1.0/24",
+        "networkSecurityGroup": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-data-tier"
+        },
+        "routeTable": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-backend"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary/subnets/demo-subnet-mgmt",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "demo-subnet-mgmt",
+      "properties": {
+        "addressPrefix": "10.1.2.0/24",
+        "networkSecurityGroup": {
+          "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-web-tier"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-web-tier",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "demo-nsg-web-tier",
+      "location": "eastus",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHTTP",
+            "properties": {
+              "access": "Allow",
+              "direction": "Inbound",
+              "priority": 100,
+              "protocol": "Tcp",
+              "destinationPortRange": "80"
+            }
+          },
+          {
+            "name": "AllowHTTPS",
+            "properties": {
+              "access": "Allow",
+              "direction": "Inbound",
+              "priority": 110,
+              "protocol": "Tcp",
+              "destinationPortRange": "443"
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-web"
+          },
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-app"
+          },
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary/subnets/demo-subnet-mgmt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/networkSecurityGroups/demo-nsg-data-tier",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "demo-nsg-data-tier",
+      "location": "eastus",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowSQL",
+            "properties": {
+              "access": "Allow",
+              "direction": "Inbound",
+              "priority": 100,
+              "protocol": "Tcp",
+              "destinationPortRange": "1433"
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-data"
+          },
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary/subnets/demo-subnet-backup"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-frontend",
+      "type": "Microsoft.Network/routeTables",
+      "name": "demo-rt-frontend",
+      "location": "eastus",
+      "properties": {
+        "routes": [
+          {
+            "name": "route-to-internet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "Internet"
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-web"
+          },
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-app"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/routeTables/demo-rt-backend",
+      "type": "Microsoft.Network/routeTables",
+      "name": "demo-rt-backend",
+      "location": "eastus",
+      "properties": {
+        "routes": [
+          {
+            "name": "route-to-firewall",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "10.0.100.4"
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-main/subnets/demo-subnet-data"
+          },
+          {
+            "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-networking/providers/Microsoft.Network/virtualNetworks/demo-vnet-secondary/subnets/demo-subnet-backup"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-compute/providers/Microsoft.Compute/virtualMachines/demo-vm-web01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "demo-vm-web01",
+      "location": "eastus",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_D2s_v3"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/demo-subscription-001/resourceGroups/demo-rg-compute/providers/Microsoft.Storage/storageAccounts/demostorageacct001",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "demostorageacct001",
+      "location": "eastus",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    }
+  ],
+  "dependencies": []
+}
