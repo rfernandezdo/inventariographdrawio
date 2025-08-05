@@ -1,0 +1,246 @@
+name: 'Azure Infrastructure Diagrams for Draw.io'
+description: 'Generate dynamic Azure infrastructure diagrams from real Azure resources using Azure Resource Graph API and export them as draw.io files'
+author: 'rfernandezdo'
+branding:
+  icon: 'layers'
+  color: 'blue'
+
+inputs:
+  azure-credentials:
+    description: 'Azure service principal credentials (JSON format with clientId, clientSecret, subscriptionId, tenantId)'
+    required: true
+  
+  diagram-mode:
+    description: 'Type of diagram to generate: infrastructure (default), components, network, all'
+    required: false
+    default: 'infrastructure'
+  
+  output-path:
+    description: 'Path for the generated draw.io file'
+    required: false
+    default: 'azure-infrastructure-diagram.drawio'
+  
+  tenant-filter:
+    description: 'Filter resources by specific Tenant ID'
+    required: false
+  
+  all-tenants:
+    description: 'Include resources from all tenants (disables automatic tenant filtering)'
+    required: false
+    default: 'false'
+  
+  no-embed-data:
+    description: 'Do not embed all data in nodes, only the type field'
+    required: false
+    default: 'false'
+  
+  no-hierarchy-edges:
+    description: 'In network mode, hide hierarchical edges (RGs and VNet-Subnet) keeping network dependencies'
+    required: false
+    default: 'false'
+  
+  include-ids:
+    description: 'Space-separated list of management group, subscription or resource group IDs to include (and their descendants)'
+    required: false
+  
+  exclude-ids:
+    description: 'Space-separated list of management group, subscription or resource group IDs to exclude (and their descendants)'
+    required: false
+  
+  export-json:
+    description: 'Export data to JSON file for later processing'
+    required: false
+  
+  commit-changes:
+    description: 'Whether to commit the generated diagram files. Options: none, push, pr'
+    required: false
+    default: 'none'
+  
+  target-branch:
+    description: 'Target branch for committing changes (when commit-changes is push or pr)'
+    required: false
+    default: 'main'
+  
+  pr-title:
+    description: 'Title for the pull request (when commit-changes is pr)'
+    required: false
+    default: 'Update Azure Infrastructure Diagrams'
+  
+  pr-body:
+    description: 'Body for the pull request (when commit-changes is pr)'
+    required: false
+    default: 'Automated update of Azure infrastructure diagrams generated from current Azure resources.'
+  
+  commit-message:
+    description: 'Commit message for the changes'
+    required: false
+    default: 'Update Azure infrastructure diagrams'
+
+outputs:
+  diagram-path:
+    description: 'Path to the generated draw.io diagram file'
+  
+  json-export-path:
+    description: 'Path to the exported JSON file (if export-json was specified)'
+  
+  total-resources:
+    description: 'Total number of resources found'
+  
+  total-dependencies:
+    description: 'Total number of dependencies found'
+  
+  tenant-id:
+    description: 'Tenant ID used for filtering (if applicable)'
+  
+  pr-number:
+    description: 'Pull request number (if commit-changes is pr and PR was created)'
+  
+  commit-sha:
+    description: 'Commit SHA of the changes (if commit-changes is push or pr)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Azure CLI
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.53.0
+        inlineScript: |
+          az extension add --name resource-graph
+    
+    - name: Install Python dependencies
+      shell: bash
+      run: |
+        pip install requests
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ inputs.azure-credentials }}
+    
+    - name: Generate Azure Infrastructure Diagram
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        
+        # Prepare command arguments
+        ARGS="--output ${{ inputs.output-path }}"
+        
+        if [[ "${{ inputs.diagram-mode }}" != "infrastructure" ]]; then
+          ARGS="$ARGS --diagram-mode ${{ inputs.diagram-mode }}"
+        fi
+        
+        if [[ "${{ inputs.tenant-filter }}" != "" ]]; then
+          ARGS="$ARGS --tenant-filter ${{ inputs.tenant-filter }}"
+        fi
+        
+        if [[ "${{ inputs.all-tenants }}" == "true" ]]; then
+          ARGS="$ARGS --all-tenants"
+        fi
+        
+        if [[ "${{ inputs.no-embed-data }}" == "true" ]]; then
+          ARGS="$ARGS --no-embed-data"
+        fi
+        
+        if [[ "${{ inputs.no-hierarchy-edges }}" == "true" ]]; then
+          ARGS="$ARGS --no-hierarchy-edges"
+        fi
+        
+        if [[ "${{ inputs.include-ids }}" != "" ]]; then
+          ARGS="$ARGS --include-ids ${{ inputs.include-ids }}"
+        fi
+        
+        if [[ "${{ inputs.exclude-ids }}" != "" ]]; then
+          ARGS="$ARGS --exclude-ids ${{ inputs.exclude-ids }}"
+        fi
+        
+        if [[ "${{ inputs.export-json }}" != "" ]]; then
+          ARGS="$ARGS --export-json ${{ inputs.export-json }}"
+        fi
+        
+        echo "Running: python src/cli.py $ARGS"
+        
+        # Execute the command and capture output
+        OUTPUT=$(python src/cli.py $ARGS 2>&1)
+        echo "$OUTPUT"
+        
+        # Extract metrics from output for action outputs
+        TOTAL_RESOURCES=$(echo "$OUTPUT" | grep -o "total_items.*[0-9]*" | grep -o "[0-9]*" | head -1 || echo "0")
+        TOTAL_DEPS=$(echo "$OUTPUT" | grep -o "total_dependencies.*[0-9]*" | grep -o "[0-9]*" | head -1 || echo "0")
+        TENANT_ID=$(echo "$OUTPUT" | grep -o "Tenant filtrado: [a-f0-9-]*" | cut -d' ' -f3 || echo "")
+        
+        # Set action outputs
+        echo "diagram-path=${{ inputs.output-path }}" >> $GITHUB_OUTPUT
+        echo "total-resources=$TOTAL_RESOURCES" >> $GITHUB_OUTPUT
+        echo "total-dependencies=$TOTAL_DEPS" >> $GITHUB_OUTPUT
+        echo "tenant-id=$TENANT_ID" >> $GITHUB_OUTPUT
+        
+        if [[ "${{ inputs.export-json }}" != "" ]]; then
+          echo "json-export-path=${{ inputs.export-json }}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Move files to workspace
+      shell: bash
+      run: |
+        # Move generated files from action directory to workspace
+        if [[ -f "${{ github.action_path }}/${{ inputs.output-path }}" ]]; then
+          cp "${{ github.action_path }}/${{ inputs.output-path }}" "${{ github.workspace }}/${{ inputs.output-path }}"
+        fi
+        
+        if [[ "${{ inputs.export-json }}" != "" && -f "${{ github.action_path }}/${{ inputs.export-json }}" ]]; then
+          cp "${{ github.action_path }}/${{ inputs.export-json }}" "${{ github.workspace }}/${{ inputs.export-json }}"
+        fi
+    
+    - name: Commit and Push Changes
+      if: inputs.commit-changes == 'push'
+      shell: bash
+      run: |
+        git config --global user.name 'Azure Infrastructure Diagrams Action'
+        git config --global user.email 'action@github.com'
+        
+        git add ${{ inputs.output-path }}
+        if [[ "${{ inputs.export-json }}" != "" ]]; then
+          git add ${{ inputs.export-json }}
+        fi
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "${{ inputs.commit-message }}"
+          git push origin ${{ inputs.target-branch }}
+          
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "commit-sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create Pull Request
+      if: inputs.commit-changes == 'pr'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ github.token }}
+        commit-message: ${{ inputs.commit-message }}
+        title: ${{ inputs.pr-title }}
+        body: ${{ inputs.pr-body }}
+        branch: azure-diagrams-update-${{ github.run_number }}
+        base: ${{ inputs.target-branch }}
+        add-paths: |
+          ${{ inputs.output-path }}
+          ${{ inputs.export-json }}
+      id: create-pr
+    
+    - name: Set PR outputs
+      if: inputs.commit-changes == 'pr' && steps.create-pr.outputs.pull-request-number
+      shell: bash
+      run: |
+        echo "pr-number=${{ steps.create-pr.outputs.pull-request-number }}" >> $GITHUB_OUTPUT
+        echo "commit-sha=${{ steps.create-pr.outputs.pull-request-head-sha }}" >> $GITHUB_OUTPUT

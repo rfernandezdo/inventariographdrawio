@@ -1,0 +1,32 @@
+# Git attributes for Azure Infrastructure Diagrams
+
+# Text files
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+
+# Binary files
+*.drawio binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Archive files
+*.zip binary
+*.tar.gz binary
+
+# Exclude from language detection (GitHub)
+docs/* linguist-documentation
+examples/* linguist-documentation
+.github/* linguist-documentation
+tests/fixtures/*.drawio linguist-generated
+data/*.json linguist-generated
+
+# Mark as vendored (don't count in language stats)
+icons/* linguist-vendored

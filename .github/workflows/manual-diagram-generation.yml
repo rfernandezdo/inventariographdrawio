@@ -1,0 +1,72 @@
+name: Generate Infrastructure Diagrams
+on:
+  workflow_dispatch:
+    inputs:
+      diagram_mode:
+        description: 'Diagram mode'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - infrastructure
+          - components
+          - network
+          - all
+      
+      tenant_filter:
+        description: 'Tenant ID to filter (optional)'
+        required: false
+        type: string
+      
+      output_filename:
+        description: 'Output filename'
+        required: false
+        default: 'azure-infrastructure-diagram.drawio'
+        type: string
+
+jobs:
+  generate-diagrams:
+    runs-on: ubuntu-latest
+    name: Generate Azure Infrastructure Diagrams
+    
+    steps:
+      - name: Generate Infrastructure Diagrams
+        id: generate
+        uses: rfernandezdo/inventariographdrawio@v1
+        with:
+          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          diagram-mode: ${{ inputs.diagram_mode }}
+          output-path: ${{ inputs.output_filename }}
+          tenant-filter: ${{ inputs.tenant_filter }}
+          export-json: 'azure-inventory.json'
+          commit-changes: 'push'
+          commit-message: 'Update Azure infrastructure diagrams - ${{ inputs.diagram_mode }} mode'
+      
+      - name: Display Results
+        run: |
+          echo "## 📊 Diagram Generation Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: ${{ inputs.diagram_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Output File**: ${{ steps.generate.outputs.diagram-path }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Resources**: ${{ steps.generate.outputs.total-resources }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Dependencies**: ${{ steps.generate.outputs.total-dependencies }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ steps.generate.outputs.tenant-id }}" ]; then
+            echo "- **Tenant ID**: ${{ steps.generate.outputs.tenant-id }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.generate.outputs.json-export-path }}" ]; then
+            echo "- **JSON Export**: ${{ steps.generate.outputs.json-export-path }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.generate.outputs.commit-sha }}" ]; then
+            echo "- **Commit SHA**: ${{ steps.generate.outputs.commit-sha }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. 📥 **Download**: Check the repository for your generated diagram file" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🎨 **Open**: Use [draw.io](https://app.diagrams.net/) to view and edit" >> $GITHUB_STEP_SUMMARY
+          echo "3. 📋 **Organize**: Select all (Ctrl+A) → Arrange → Layout → Hierarchical" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🔍 **Explore**: Click any resource and press Ctrl+M to see metadata" >> $GITHUB_STEP_SUMMARY

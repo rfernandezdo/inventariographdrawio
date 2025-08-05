@@ -10,6 +10,7 @@ src/__pycache__/*
 tests/__pycache__/*
 *.pyc
 *.pyo
+.pytest_cache/
 
 # Test output files
 test_output.log
@@ -17,12 +18,21 @@ test-debug-*.drawio
 test-temp-*.drawio
 test-manual-*.drawio
 
+# Generated reports and temporary files
+reports/
+current-infrastructure.json
+previous-infrastructure.json
+changes-summary.json
+changes-summary.md
+
 # IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
 Thumbs.db
+*.Zone.Identifier

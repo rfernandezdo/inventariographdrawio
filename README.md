@@ -1,10 +1,53 @@
-# Microsoft Azure dynamic diagrams with draw.io and Azure Resource Graph
+# Azure Infrastructure Diagrams for Draw.io
 
-Este proyecto permite generar diagramas automáticos de topologías y recursos de Azure en draw.io, a partir de datos reales obtenidos mediante Azure Resource Graph.
+[![GitHub Action](https://img.shields.io/badge/GitHub-Action-blue?logo=github-actions&logoColor=white)](https://github.com/marketplace/actions/azure-infrastructure-diagrams-for-draw-io)
+[![Version](https://img.shields.io/github/v/release/rfernandezdo/inventariographdrawio?include_prereleases&label=version)](https://github.com/rfernandezdo/inventariographdrawio/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)](https://www.python.org)
+[![Azure](https://img.shields.io/badge/Azure-Resource%20Graph-0078d4.svg?logo=microsoft-azure&logoColor=white)](https://azure.microsoft.com/en-us/services/azure-resource-graph/)
 
-## Objetivo
-- Automatizar la creación de diagramas de arquitectura Azure en draw.io, exportando los recursos a CSV y usando la función de importación de draw.io.
-- Facilitar la visualización y documentación de entornos Azure de forma dinámica y actualizable.
+Generador automático de diagramas de infraestructura Azure dinámicos para draw.io, utilizando datos reales obtenidos mediante Azure Resource Graph API. **Disponible como GitHub Action y herramienta CLI.**
+
+## 🚀 Uso Rápido
+
+### 🤖 Como GitHub Action (Recomendado)
+```yaml
+- name: Generate Azure Infrastructure Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
+    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    diagram-mode: 'all'
+    output-path: 'docs/azure-infrastructure.drawio'
+    commit-changes: 'pr'
+```
+[📖 **Configuración completa en 5 minutos**](SETUP_GITHUB_ACTION.md) | [📋 **15+ ejemplos de workflows**](EXAMPLES.md)
+
+### 👨‍💻 Como CLI Local
+```bash
+python src/cli.py --diagram-mode all --output mi-infraestructura.drawio
+```
+
+## Objetivos
+- 🤖 **Automatización completa**: GitHub Action para integración CI/CD
+- 📊 **Visualización dinámica**: Diagramas actualizados automáticamente desde Azure Resource Graph
+- 🏢 **Multi-tenant**: Soporte para entornos empresariales complejos
+- ⚡ **Alto rendimiento**: Procesamiento de 1000+ recursos en segundos
+
+## 🎯 Casos de Uso
+
+### 🤖 Automatización con GitHub Actions
+- **Informes semanales**: Diagramas automáticos cada lunes
+- **Detección de cambios**: Notificaciones cuando cambia la infraestructura  
+- **Documentación viva**: PRs automáticos con diagramas actualizados
+- **Múltiples entornos**: Diagramas separados por tenant/suscripción
+
+### 👨‍💻 Uso Local/Manual
+- **Auditorías rápidas**: Generar diagrama completo en minutos
+- **Análisis de arquitectura**: Visualizar dependencias y relaciones
+- **Documentación técnica**: Exportar a draw.io para presentaciones
+- **Análisis offline**: Usar JSON exports para procesamiento personalizado
+
+Ver [ACTION_README.md](ACTION_README.md) para documentación completa de la GitHub Action.
 
 ## 🚀 Características Principales
 
@@ -103,21 +146,87 @@ inventariographdrawio/
 3. **`tests/test_complex_tree.py`** - ⭐ Estructuras complejas
 4. **`tests/layout/test_comparison_layouts.py`** - Comparar diferentes layouts
 
-## Requisitos
-- Python 3.x
-- Azure CLI (`az`) y extensión `az graph`
-- Permisos de lectura en la suscripción de Azure
+## Instalación y Configuración
 
-## Instalación
+### GitHub Action (Recomendado)
+1. **Crear Service Principal Azure**:
 ```bash
-# Instalar dependencias si es necesario
-pip install requests
-
-# Asegurarse de tener Azure CLI y la extensión graph
-az extension add --name resource-graph
+az ad sp create-for-rbac --name "GitHub-Azure-Diagrams" --role "Reader" --scopes /subscriptions/{subscription-id} --sdk-auth
 ```
 
-## Uso Básico
+2. **Configurar secreto en GitHub**:
+   - Ve a `Settings > Secrets and variables > Actions`
+   - Crea `AZURE_CREDENTIALS` con la salida del comando anterior
+
+3. **Crear workflow**:
+```yaml
+name: Azure Infrastructure Diagrams
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # Lunes 6 AM
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: rfernandezdo/inventariographdrawio@v1
+        with:
+          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          diagram-mode: 'all'
+          commit-changes: 'pr'
+```
+
+### CLI Local
+```bash
+# Requisitos
+pip install requests
+az extension add --name resource-graph
+
+# Uso básico
+python src/cli.py
+```
+
+## Uso
+
+### 🤖 Como GitHub Action
+
+#### Diagrama Básico de Infraestructura
+```yaml
+- name: Generate Infrastructure Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
+    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    output-path: 'docs/infrastructure.drawio'
+```
+
+#### Diagrama Completo con Pull Request
+```yaml
+- name: Generate All Diagrams
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
+    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    diagram-mode: 'all'
+    export-json: 'docs/azure-inventory.json'
+    commit-changes: 'pr'
+    pr-title: 'Update Azure Infrastructure'
+```
+
+#### Por Tenant Específico
+```yaml
+- name: Generate Production Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
+    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    tenant-filter: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    include-ids: '/subscriptions/prod-sub-id'
+    commit-changes: 'push'
+    target-branch: 'prod-docs'
+```
+
+### 👨‍💻 Como CLI Local
+
+#### Básico
 ```bash
 # Generar diagrama con todos los recursos (usa tenant actual automáticamente)
 python src/cli.py
@@ -132,7 +241,7 @@ python src/cli.py --export-json inventario.json
 python src/cli.py --input-json inventario.json --output diagrama_offline.drawio
 ```
 
-## 🏢 Filtrado por Tenant (NUEVO)
+#### 🏢 Filtrado por Tenant
 ```bash
 # Listar todos los tenants disponibles
 python src/cli.py --list-tenants

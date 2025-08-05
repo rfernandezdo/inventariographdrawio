@@ -1,0 +1,214 @@
+name: Infrastructure Change Detection
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  detect-infrastructure-changes:
+    runs-on: ubuntu-latest
+    name: Detect Azure Infrastructure Changes
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit for comparison
+      
+      - name: Generate Current Infrastructure Snapshot
+        id: current-snapshot
+        uses: rfernandezdo/inventariographdrawio@v1
+        with:
+          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          export-json: 'current-infrastructure.json'
+          commit-changes: 'none'
+      
+      - name: Download Previous Snapshot
+        id: previous-snapshot
+        continue-on-error: true
+        run: |
+          if [ -f "previous-infrastructure.json" ]; then
+            echo "previous-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "previous-exists=false" >> $GITHUB_OUTPUT
+            echo "No previous snapshot found, this will be the baseline"
+          fi
+      
+      - name: Compare Infrastructure
+        id: compare
+        if: steps.previous-snapshot.outputs.previous-exists == 'true'
+        run: |
+          # Create a simple comparison script
+          cat > compare_infrastructure.py << 'EOF'
+          import json
+          import sys
+          
+          def load_inventory(filename):
+              with open(filename, 'r') as f:
+                  data = json.load(f)
+              return data.get('items', []) if 'items' in data else data.get('resources', [])
+          
+          def compare_inventories(previous_file, current_file):
+              try:
+                  previous = load_inventory(previous_file)
+                  current = load_inventory(current_file)
+                  
+                  # Create sets of resource IDs for comparison
+                  previous_ids = {item['id'] for item in previous}
+                  current_ids = {item['id'] for item in current}
+                  
+                  # Find changes
+                  added = current_ids - previous_ids
+                  removed = previous_ids - current_ids
+                  
+                  # Create summary
+                  changes = {
+                      'added_count': len(added),
+                      'removed_count': len(removed),
+                      'total_previous': len(previous),
+                      'total_current': len(current),
+                      'added_resources': list(added)[:10],  # Limit for output
+                      'removed_resources': list(removed)[:10],
+                      'has_changes': len(added) > 0 or len(removed) > 0
+                  }
+                  
+                  return changes
+              except Exception as e:
+                  print(f"Error comparing inventories: {e}")
+                  return {'has_changes': False, 'error': str(e)}
+          
+          if __name__ == "__main__":
+              changes = compare_inventories('previous-infrastructure.json', 'current-infrastructure.json')
+              
+              # Output for GitHub Actions
+              print(f"has-changes={'true' if changes.get('has_changes', False) else 'false'}")
+              print(f"added-count={changes.get('added_count', 0)}")
+              print(f"removed-count={changes.get('removed_count', 0)}")
+              
+              # Save detailed changes for issue creation
+              with open('changes-summary.json', 'w') as f:
+                  json.dump(changes, f, indent=2)
+          EOF
+          
+          python compare_infrastructure.py >> $GITHUB_OUTPUT
+      
+      - name: Create Change Summary
+        id: create-summary
+        if: steps.compare.outputs.has-changes == 'true'
+        run: |
+          cat > changes-summary.md << 'EOF'
+          # 🚨 Azure Infrastructure Changes Detected
+          
+          ## Summary
+          EOF
+          
+          # Read the comparison results
+          if [ -f "changes-summary.json" ]; then
+            python -c "
+          import json
+          with open('changes-summary.json', 'r') as f:
+              changes = json.load(f)
+          
+          print(f\"- **Resources Added**: {changes.get('added_count', 0)}\")
+          print(f\"- **Resources Removed**: {changes.get('removed_count', 0)}\")
+          print(f\"- **Total Resources**: {changes.get('total_current', 0)} (was {changes.get('total_previous', 0)})\")
+          print()
+          
+          if changes.get('added_resources'):
+              print('## ➕ Added Resources')
+              for resource in changes['added_resources']:
+                  print(f'- \`{resource}\`')
+              if changes.get('added_count', 0) > 10:
+                  print(f'- ... and {changes[\"added_count\"] - 10} more')
+              print()
+          
+          if changes.get('removed_resources'):
+              print('## ➖ Removed Resources')
+              for resource in changes['removed_resources']:
+                  print(f'- \`{resource}\`')
+              if changes.get('removed_count', 0) > 10:
+                  print(f'- ... and {changes[\"removed_count\"] - 10} more')
+              print()
+          
+          print('## 🔍 Action Required')
+          print('1. Review the changes above')
+          print('2. Update infrastructure documentation if needed')
+          print('3. Consider running a full diagram update')
+          print()
+          print('---')
+          print('*This issue was automatically generated by the Infrastructure Change Detection workflow*')
+          " >> changes-summary.md
+          fi
+      
+      - name: Create Issue for Changes
+        if: steps.compare.outputs.has-changes == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let body = '# 🚨 Azure Infrastructure Changes Detected\n\nChanges were detected but summary could not be generated.';
+            
+            try {
+              body = fs.readFileSync('changes-summary.md', 'utf8');
+            } catch (error) {
+              console.log('Could not read changes summary:', error.message);
+            }
+            
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Infrastructure Changes Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: body,
+              labels: ['infrastructure', 'automated', 'changes-detected']
+            });
+            
+            console.log(`Created issue #${issue.data.number}`);
+      
+      - name: Update Infrastructure Diagrams on Changes
+        if: steps.compare.outputs.has-changes == 'true'
+        uses: rfernandezdo/inventariographdrawio@v1
+        with:
+          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          diagram-mode: 'all'
+          output-path: 'docs/azure-infrastructure-updated.drawio'
+          export-json: 'docs/azure-inventory-updated.json'
+          commit-changes: 'pr'
+          pr-title: '🔄 Infrastructure Changes Detected - Updated Diagrams'
+          pr-body: |
+            ## 🔄 Infrastructure Changes Detected
+            
+            Automatic infrastructure monitoring detected changes in our Azure environment.
+            
+            ### Changes Summary
+            - **Added Resources**: ${{ steps.compare.outputs.added-count }}
+            - **Removed Resources**: ${{ steps.compare.outputs.removed-count }}
+            
+            ### Updated Files
+            - `docs/azure-infrastructure-updated.drawio` - Updated complete diagram
+            - `docs/azure-inventory-updated.json` - Updated inventory data
+            
+            ### Related Issue
+            An issue has been created with detailed change information for review.
+            
+            ---
+            *🤖 This PR was automatically generated due to detected infrastructure changes*
+      
+      - name: Store Current Snapshot as Previous
+        if: always()
+        run: |
+          # Store current snapshot for next comparison
+          if [ -f "current-infrastructure.json" ]; then
+            cp current-infrastructure.json previous-infrastructure.json
+            git config --global user.name 'Infrastructure Monitor'
+            git config --global user.email 'action@github.com'
+            git add previous-infrastructure.json
+            git commit -m "Update infrastructure baseline snapshot" || echo "No changes to commit"
+            git push origin ${{ github.ref_name }} || echo "Nothing to push"
+          fi
+      
+      - name: Notify on No Changes
+        if: steps.compare.outputs.has-changes != 'true' && steps.previous-snapshot.outputs.previous-exists == 'true'
+        run: |
+          echo "✅ No infrastructure changes detected since last check"
+          echo "Current resource count: ${{ steps.current-snapshot.outputs.total-resources }}"

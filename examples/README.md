@@ -1,25 +1,46 @@
 # Examples
 
-Este directorio contiene scripts de ejemplo y herramientas de análisis.
+Este directorio contiene scripts de ejemplo para uso avanzado de Azure Infrastructure Diagrams.
 
-## Archivos
+## 📁 Archivos Disponibles
 
-- `azure_to_drawio.py` - Script legacy (migrado a estructura modular)
-- `demo_cache_workflow.py` - Demuestra el flujo de trabajo con cache local
-- `analyze_cache_and_create_masked_data.py` - Analiza cache y crea datos enmascarados
+### Integración y Análisis
+- **`azure_to_drawio.py`** - Ejemplo de integración directa con las APIs
+- **`demo_cache_workflow.py`** - Demuestra el flujo de trabajo con cache local  
+- **`analyze_cache_and_create_masked_data.py`** - Análisis de cache y creación de datos enmascarados para testing
 
-## Uso
+### Scripts de Uso Común
+Para ejemplos de uso más comunes, ver:
+- **`../generate_infrastructure_report.py`** - Script principal para reportes completos
+- **`../EXAMPLES.md`** - 15+ ejemplos de configuración para GitHub Action y CLI
 
-Desde el directorio raíz del proyecto:
+## 🚀 Uso
 
+### Scripts Locales
 ```bash
-# Ejecutar demo del workflow de cache
-python3 examples/demo_cache_workflow.py
+# Desde el directorio raíz del proyecto:
+
+# Demo del workflow de cache
+python examples/demo_cache_workflow.py
 
 # Analizar cache y crear datos enmascarados
-python3 examples/analyze_cache_and_create_masked_data.py
+python examples/analyze_cache_and_create_masked_data.py
+
+# Reporte completo de infraestructura
+python generate_infrastructure_report.py --output-dir reports
 ```
 
-## Notas
+### GitHub Action
+Para automatización, usar la GitHub Action directamente:
+```yaml
+- uses: rfernandezdo/inventariographdrawio@v1
+  with:
+    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    diagram-mode: 'all'
+```
 
-Los scripts han sido actualizados para usar las rutas correctas después de la reorganización del proyecto.
+## 📚 Documentación
+
+- **Setup de GitHub Action**: [../SETUP_GITHUB_ACTION.md](../SETUP_GITHUB_ACTION.md)
+- **Ejemplos completos**: [../EXAMPLES.md](../EXAMPLES.md)
+- **Documentación de la Action**: [../ACTION_README.md](../ACTION_README.md)
