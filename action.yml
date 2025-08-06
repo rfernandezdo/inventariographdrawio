@@ -1,5 +1,5 @@
 name: 'Azure Infrastructure Diagrams for Draw.io'
-description: 'Generate dynamic Azure infrastructure diagrams from real Azure resources using Azure Resource Graph API and export them as draw.io files'
+description: 'Generate dynamic Azure infrastructure diagrams from real Azure resources and export as draw.io files'
 author: 'rfernandezdo'
 branding:
   icon: 'layers'
