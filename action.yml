@@ -164,7 +164,7 @@ runs:
         echo "=== Azure Infrastructure Diagram Generator ==="
         echo "Working directory: $(pwd)"
         echo "Python version: $(python --version)"
-        echo "Azure CLI version: $(az version --output tsv --query '\"azure-cli\"')"
+        echo "Azure CLI version: $(az --version | head -1 | cut -d' ' -f2 || echo 'Version check failed')"
         echo "Running command: python src/cli.py $ARGS"
         echo ""
         

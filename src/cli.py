@@ -226,14 +226,9 @@ def main():
         import traceback
         traceback.print_exc()
         sys.exit(1)
+    
+    # Escribir archivo de salida
     try:
-        # Crear directorio padre si no existe
-        output_dir = os.path.dirname(output_file)
-        if output_dir and not os.path.exists(output_dir):
-            print(f"INFO: Creando directorio: {output_dir}")
-            os.makedirs(output_dir, exist_ok=True)
-            
-        try:
         # Crear el directorio de salida si no existe
         output_dir = os.path.dirname(output_file)
         if output_dir and not os.path.exists(output_dir):
@@ -242,8 +237,7 @@ def main():
         
         with open(output_file, "w", encoding='utf-8') as f:
             f.write(drawio_content)
-        print(f"
-¡ÉXITO! Se ha creado el diagrama de '{args.diagram_mode}' en '{output_file}'.")
+        print(f"\n¡ÉXITO! Se ha creado el diagrama de '{args.diagram_mode}' en '{output_file}'.")
         
         if target_tenant:
             print(f"\nTenant filtrado: {target_tenant}")
