@@ -23,7 +23,7 @@ Si estás actualizando desde v1.x, consulta la [guía de migración](MIGRATION_G
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 - name: Generate Azure Infrastructure Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     diagram-mode: 'all'
     output-path: 'docs/azure-infrastructure.drawio'
@@ -179,7 +179,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: rfernandezdo/inventariographdrawio@v1
+      - uses: rfernandezdo/inventariographdrawio@v2
         with:
           azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'all'
@@ -210,7 +210,7 @@ python src/cli.py
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 - name: Generate Infrastructure Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     output-path: 'docs/infrastructure.drawio'
 ```
@@ -218,7 +218,7 @@ python src/cli.py
 #### Diagrama Completo con Pull Request
 ```yaml
 - name: Generate All Diagrams
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'
@@ -230,7 +230,7 @@ python src/cli.py
 #### Por Tenant Específico
 ```yaml
 - name: Generate Production Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     tenant-filter: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'

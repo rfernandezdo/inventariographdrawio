@@ -48,7 +48,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Generate Complete Infrastructure Report
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: 'all'
           output-path: 'reports/azure-infrastructure-${{ github.run_number }}.drawio'
@@ -98,7 +98,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Generate Light Infrastructure Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: 'infrastructure'
           no-embed-data: true  # Archivos más ligeros
@@ -152,7 +152,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Generate Tenant Diagram - ${{ matrix.tenant.name }}
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           tenant-filter: ${{ matrix.tenant.id }}
           include-ids: ${{ matrix.tenant.subscriptions }}
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate All-Tenants Overview
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           all-tenants: true
@@ -222,7 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Network Topology
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'
@@ -258,7 +258,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Security-Focused Network Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'
@@ -291,7 +291,7 @@ jobs:
       
       - name: Generate Current State
         id: current-state
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           export-json: 'current-state.json'
@@ -317,7 +317,7 @@ jobs:
       
       - name: Update Infrastructure Diagrams on Changes
         if: steps.compare.outputs.has-changes == 'true'
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
@@ -368,7 +368,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Microservices Infrastructure
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'  # Enfoque en conectividad entre servicios
@@ -394,7 +394,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Data Platform Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'components'  # Enfoque en servicios de datos
@@ -489,7 +489,7 @@ jobs:
     
     steps:
       - name: Generate ${{ matrix.environment }} Infrastructure
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
@@ -537,7 +537,7 @@ jobs:
           esac
       
       - name: Generate Environment Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           include-ids: ${{ env.TARGET_SUBSCRIPTION }}

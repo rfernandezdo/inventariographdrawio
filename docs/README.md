@@ -52,7 +52,7 @@ Para desarrollo asistido por AI:
 
 ### Como GitHub Action (Recomendado)
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'

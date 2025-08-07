@@ -48,7 +48,7 @@ jobs:
 
       - name: Generate Infrastructure Diagrams
         id: generate
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: ${{ inputs.diagram_mode }}
           output-path: ${{ inputs.output_filename }}

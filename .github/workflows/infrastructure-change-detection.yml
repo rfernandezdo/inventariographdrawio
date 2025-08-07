@@ -29,7 +29,7 @@ jobs:
       
       - name: Generate Current Infrastructure Snapshot
         id: current-snapshot
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           export-json: 'current-infrastructure.json'
           commit-changes: 'none'
@@ -179,7 +179,7 @@ jobs:
       - name: Generate Updated Infrastructure Diagrams
         id: generate-updated
         if: steps.compare.outputs.has-changes == 'true'
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: 'all'
           output-path: 'docs/azure-infrastructure-updated.drawio'

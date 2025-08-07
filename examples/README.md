@@ -33,7 +33,7 @@ python generate_infrastructure_report.py --output-dir reports
 ### GitHub Action
 Para automatización, usar la GitHub Action directamente:
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'

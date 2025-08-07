@@ -8,7 +8,7 @@ Este documento describe los diferentes modos de diagrama disponibles en Azure In
 
 #### Como GitHub Action
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'infrastructure'  # o simplemente omitir (es el defecto)
@@ -59,7 +59,7 @@ python src/cli.py  # (modo por defecto)
 
 #### Como GitHub Action
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'components'
@@ -169,7 +169,7 @@ python src/cli.py --diagram-mode components
 
 #### Como GitHub Action
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'network'
@@ -205,7 +205,7 @@ python src/cli.py --diagram-mode network --no-hierarchy-edges  # Solo deps funci
 
 #### Como GitHub Action
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'  # Un solo archivo, múltiples páginas

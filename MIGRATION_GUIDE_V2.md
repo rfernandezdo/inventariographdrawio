@@ -64,7 +64,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: rfernandezdo/inventariographdrawio@v1
+      - uses: rfernandezdo/inventariographdrawio@v2
         with:
           azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'all'
@@ -116,7 +116,7 @@ jobs:
 If you need to temporarily rollback to v1.x:
 
 ```yaml
-- uses: rfernandezdo/inventariographdrawio@v1
+- uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
 ```

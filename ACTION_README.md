@@ -56,7 +56,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Generate Infrastructure Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: 'all'
           output-path: 'docs/azure-infrastructure.drawio'
@@ -146,7 +146,7 @@ All diagram types in a single draw.io file with separate pages:
 ### Basic Infrastructure Diagram
 ```yaml
 - name: Generate Basic Infrastructure Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     # Azure login debe hacerse previamente con azure/login@v2
     output-path: 'diagrams/infrastructure.drawio'
@@ -155,7 +155,7 @@ All diagram types in a single draw.io file with separate pages:
 ### Multi-page Diagram with PR
 ```yaml
 - name: Generate All Diagrams and Create PR
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     # Azure login debe hacerse previamente con azure/login@v2
     diagram-mode: 'all'
@@ -181,7 +181,7 @@ All diagram types in a single draw.io file with separate pages:
 ### Network-focused Diagram for Specific Resources
 ```yaml
 - name: Generate Network Diagram for Production
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     # Azure login debe hacerse previamente con azure/login@v2
     diagram-mode: 'network'
@@ -195,7 +195,7 @@ All diagram types in a single draw.io file with separate pages:
 ### Multi-tenant Environment
 ```yaml
 - name: Generate Separate Diagrams per Tenant
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     # Azure login debe hacerse previamente con azure/login@v2
     tenant-filter: ${{ matrix.tenant }}
@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Infrastructure Report
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
@@ -253,7 +253,7 @@ jobs:
     steps:
       - name: Generate Current Infrastructure
         id: current
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           # Azure login debe hacerse previamente con azure/login@v2
           export-json: 'current-inventory.json'

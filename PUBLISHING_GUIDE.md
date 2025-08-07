@@ -70,7 +70,7 @@ git push origin v1.0.0
 
 ```yaml
 - name: Generate Azure Infrastructure Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'
@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test Azure Infrastructure Diagrams Action
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'infrastructure'

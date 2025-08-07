@@ -75,7 +75,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Generate Infrastructure Diagram
-        uses: rfernandezdo/inventariographdrawio@v1
+        uses: rfernandezdo/inventariographdrawio@v2
         with:
           diagram-mode: 'all'
           output-path: 'docs/azure-infrastructure.drawio'
@@ -103,14 +103,14 @@ jobs:
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 - name: Generate Tenant Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     tenant-filter: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
     output-path: 'docs/tenant-a-infrastructure.drawio'
 
 # Todos los tenants
 - name: Generate All Tenants Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     all-tenants: true
     output-path: 'docs/all-tenants-infrastructure.drawio'
@@ -128,14 +128,14 @@ jobs:
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 - name: Generate Production Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     include-ids: '/subscriptions/prod-subscription-id /resourceGroups/prod-rg'
     output-path: 'docs/production-only.drawio'
 
 # Excluir recursos de desarrollo
 - name: Generate Without Dev Diagram
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     exclude-ids: '/subscriptions/dev-subscription-id'
     output-path: 'docs/without-dev.drawio'
@@ -188,7 +188,7 @@ commit-changes: 'none'
 
 - name: Generate Diagrams
   id: generate
-  uses: rfernandezdo/inventariographdrawio@v1
+  uses: rfernandezdo/inventariographdrawio@v2
   with:
     diagram-mode: 'all'
 
