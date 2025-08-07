@@ -6,10 +6,6 @@ branding:
   color: 'blue'
 
 inputs:
-  azure-credentials:
-    description: 'Azure service principal credentials (JSON format with clientId, clientSecret, subscriptionId, tenantId)'
-    required: true
-  
   diagram-mode:
     description: 'Type of diagram to generate: infrastructure (default), components, network, all'
     required: false
@@ -112,9 +108,9 @@ runs:
         python-version: '3.11'
     
     - name: Install Azure CLI
-      uses: azure/CLI@v1
+      uses: azure/CLI@v2
       with:
-        azcliversion: 2.53.0
+        azcliversion: latest
         inlineScript: |
           az extension add --name resource-graph
     
@@ -122,11 +118,6 @@ runs:
       shell: bash
       run: |
         pip install requests
-    
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ inputs.azure-credentials }}
     
     - name: Generate Azure Infrastructure Diagram
       shell: bash

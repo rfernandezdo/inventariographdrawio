@@ -12,6 +12,21 @@ A GitHub Action that automatically generates dynamic Azure infrastructure diagra
 🔄 **Automated Updates**: Push diagrams to branches or create pull requests  
 📱 **Export Options**: Generate both draw.io files and JSON exports  
 
+## ⚠️ Authentication Requirements
+
+This action requires Azure authentication to be configured **before** using it. You must use `azure/login@v2` in your workflow:
+
+```yaml
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+**Migration from v0.x**: If you were using `azure-credentials` input in previous versions, please follow the [setup guide](SETUP_GITHUB_ACTION.md) to migrate to OIDC authentication.  
+
 ## Quick Start
 
 ```yaml
@@ -21,14 +36,28 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday at 6 AM
 
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   generate-diagrams:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Generate Infrastructure Diagram
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'all'
           output-path: 'docs/azure-infrastructure.drawio'
           commit-changes: 'pr'
@@ -36,12 +65,6 @@ jobs:
 ```
 
 ## Inputs
-
-### Required Inputs
-
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `azure-credentials` | Azure service principal credentials (JSON format) | ✅ | - |
 
 ### Optional Inputs
 
@@ -125,7 +148,7 @@ All diagram types in a single draw.io file with separate pages:
 - name: Generate Basic Infrastructure Diagram
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    # Azure login debe hacerse previamente con azure/login@v2
     output-path: 'diagrams/infrastructure.drawio'
 ```
 
@@ -134,7 +157,7 @@ All diagram types in a single draw.io file with separate pages:
 - name: Generate All Diagrams and Create PR
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    # Azure login debe hacerse previamente con azure/login@v2
     diagram-mode: 'all'
     output-path: 'docs/azure-complete.drawio'
     export-json: 'docs/azure-inventory.json'
@@ -160,7 +183,7 @@ All diagram types in a single draw.io file with separate pages:
 - name: Generate Network Diagram for Production
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    # Azure login debe hacerse previamente con azure/login@v2
     diagram-mode: 'network'
     include-ids: '/subscriptions/prod-subscription-id'
     no-hierarchy-edges: true
@@ -174,7 +197,7 @@ All diagram types in a single draw.io file with separate pages:
 - name: Generate Separate Diagrams per Tenant
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    # Azure login debe hacerse previamente con azure/login@v2
     tenant-filter: ${{ matrix.tenant }}
     output-path: 'diagrams/${{ matrix.tenant-name }}-infrastructure.drawio'
     commit-changes: 'push'
@@ -203,7 +226,7 @@ jobs:
       - name: Generate Infrastructure Report
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
           export-json: 'reports/azure-inventory-${{ github.run_number }}.json'
           output-path: 'reports/azure-infrastructure-${{ github.run_number }}.drawio'
@@ -232,7 +255,7 @@ jobs:
         id: current
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           export-json: 'current-inventory.json'
           commit-changes: 'none'
       

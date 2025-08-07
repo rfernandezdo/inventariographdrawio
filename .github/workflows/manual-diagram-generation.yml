@@ -24,17 +24,32 @@ on:
         default: 'azure-infrastructure-diagram.drawio'
         type: string
 
+permissions:
+  id-token: write
+  contents: write
+
 jobs:
   generate-diagrams:
     runs-on: ubuntu-latest
     name: Generate Azure Infrastructure Diagrams
     
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Generate Infrastructure Diagrams
         id: generate
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: ${{ inputs.diagram_mode }}
           output-path: ${{ inputs.output_filename }}
           tenant-filter: ${{ inputs.tenant_filter }}

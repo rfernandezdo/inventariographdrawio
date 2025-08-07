@@ -2,6 +2,21 @@
 
 Esta guía contiene ejemplos de configuración para diferentes casos de uso tanto con GitHub Actions como con CLI local.
 
+## ⚠️ Nota Importante sobre Autenticación
+
+Todos los ejemplos asumen que ya tienes configurado Azure Login previo en tu workflow. Debes agregar este paso antes de usar la action:
+
+```yaml
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+Para configurar esto, sigue la [guía de configuración](SETUP_GITHUB_ACTION.md).
+
 ## 📊 Informes Automáticos
 
 ### Reporte Semanal Completo
@@ -13,14 +28,28 @@ on:
     - cron: '0 6 * * 1'  # Lunes 6 AM UTC
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   weekly-report:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Generate Complete Infrastructure Report
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'all'
           output-path: 'reports/azure-infrastructure-${{ github.run_number }}.drawio'
           export-json: 'reports/azure-inventory-${{ github.run_number }}.json'
@@ -50,14 +79,27 @@ on:
     - cron: '0 9 * * 1-5'  # Días laborables 9 AM
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: write
+
 jobs:
   daily-check:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Generate Light Infrastructure Diagram
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           diagram-mode: 'infrastructure'
           no-embed-data: true  # Archivos más ligeros
           output-path: 'daily/azure-infrastructure-${{ github.run_date }}.drawio'
@@ -77,6 +119,11 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Lunes 6 AM
 
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   generate-tenant-diagrams:
     runs-on: ubuntu-latest
@@ -94,10 +141,19 @@ jobs:
             subscriptions: '/subscriptions/staging-sub-001'
     
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ matrix.tenant.id }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Generate Tenant Diagram - ${{ matrix.tenant.name }}
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           tenant-filter: ${{ matrix.tenant.id }}
           include-ids: ${{ matrix.tenant.subscriptions }}
           diagram-mode: 'all'
@@ -126,7 +182,7 @@ jobs:
       - name: Generate All-Tenants Overview
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           all-tenants: true
           diagram-mode: 'components'  # Mejor para comparaciones
           output-path: 'analysis/all-tenants-comparison.drawio'
@@ -168,7 +224,7 @@ jobs:
       - name: Generate Network Topology
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'
           no-hierarchy-edges: true  # Solo dependencias funcionales
           include-ids: ${{ inputs.focus_subscription || '' }}
@@ -204,7 +260,7 @@ jobs:
       - name: Generate Security-Focused Network Diagram
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'
           # Incluir solo recursos relacionados con seguridad de red
           output-path: 'security/network-security-analysis.drawio'
@@ -237,7 +293,7 @@ jobs:
         id: current-state
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           export-json: 'current-state.json'
           commit-changes: 'none'  # Solo generar, no commitear aún
       
@@ -263,7 +319,7 @@ jobs:
         if: steps.compare.outputs.has-changes == 'true'
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
           output-path: 'infrastructure/azure-infrastructure-updated.drawio'
           commit-changes: 'pr'
@@ -314,7 +370,7 @@ jobs:
       - name: Generate Microservices Infrastructure
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'network'  # Enfoque en conectividad entre servicios
           include-ids: '/subscriptions/microservices-prod /subscriptions/microservices-staging'
           no-hierarchy-edges: true
@@ -340,7 +396,7 @@ jobs:
       - name: Generate Data Platform Diagram
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'components'  # Enfoque en servicios de datos
           include-ids: '/resourceGroups/data-platform-prod /resourceGroups/data-lake-prod'
           output-path: 'docs/data-platform-architecture.drawio'
@@ -435,7 +491,7 @@ jobs:
       - name: Generate ${{ matrix.environment }} Infrastructure
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets[matrix.credentials] }}
+          # Azure login debe hacerse previamente con azure/login@v2
           diagram-mode: 'all'
           output-path: 'environments/${{ matrix.output }}'
           commit-changes: 'push'
@@ -483,7 +539,7 @@ jobs:
       - name: Generate Environment Diagram
         uses: rfernandezdo/inventariographdrawio@v1
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          # Azure login debe hacerse previamente con azure/login@v2
           include-ids: ${{ env.TARGET_SUBSCRIPTION }}
           diagram-mode: 'all'
           output-path: ${{ env.OUTPUT_PATH }}

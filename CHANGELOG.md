@@ -5,6 +5,36 @@ All notable changes to Azure Infrastructure Diagrams for Draw.io will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-01-08
+
+### 🔄 BREAKING CHANGES
+
+#### Migration to Azure Login v2 with OIDC
+- **Removed**: `azure-credentials` input parameter
+- **Added**: Dependency on `azure/login@v2` action for authentication
+- **Security**: Migrated from service principal secrets to OIDC (OpenID Connect) authentication
+- **Updated**: All documentation, examples, and workflows to use new authentication method
+
+#### Migration Steps
+1. Remove `azure-credentials` input from your workflows
+2. Add `azure/login@v2` step before using this action
+3. Configure OIDC secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
+4. Add required permissions: `id-token: write` to your workflow
+
+### Added
+- **Enhanced Security**: OIDC authentication eliminates need for long-lived secrets
+- **Better Error Handling**: Clearer error messages for authentication issues
+- **Updated Azure CLI**: Upgraded to latest version for better compatibility
+
+### Changed
+- **Documentation**: Complete overhaul of setup guides and examples
+- **Workflow Examples**: All example workflows updated to new authentication pattern
+- **Action Schema**: Simplified input parameters
+
+### Fixed
+- **Azure CLI Version**: Updated to use latest stable Azure CLI version
+- **Compatibility**: Better support for modern Azure environments
+
 ## [1.0.0] - 2025-01-XX
 
 ### Added - GitHub Action Release 🚀

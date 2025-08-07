@@ -10,12 +10,21 @@ Generador automático de diagramas de infraestructura Azure dinámicos para draw
 
 ## 🚀 Uso Rápido
 
+### ⚠️ Migración a v2.0
+Si estás actualizando desde v1.x, consulta la [guía de migración](MIGRATION_GUIDE_V2.md) para migrar a la nueva autenticación OIDC.
+
 ### 🤖 Como GitHub Action (Recomendado)
 ```yaml
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
 - name: Generate Azure Infrastructure Diagram
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     diagram-mode: 'all'
     output-path: 'docs/azure-infrastructure.drawio'
     commit-changes: 'pr'
@@ -193,10 +202,16 @@ python src/cli.py
 
 #### Diagrama Básico de Infraestructura
 ```yaml
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
 - name: Generate Infrastructure Diagram
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     output-path: 'docs/infrastructure.drawio'
 ```
 

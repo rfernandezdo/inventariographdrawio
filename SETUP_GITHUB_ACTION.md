@@ -4,27 +4,46 @@ Esta guía te ayudará a configurar la GitHub Action para generar automáticamen
 
 ## 🚀 Configuración Rápida (5 minutos)
 
-### Paso 1: Crear Service Principal en Azure
+### Paso 1: Configurar Azure Application/Service Principal
 
 ```bash
-# Crear service principal con permisos de lectura
-az ad sp create-for-rbac \
-  --name "GitHub-Azure-Infrastructure-Diagrams" \
+# Crear aplicación Azure AD
+az ad app create --display-name "GitHub-Azure-Infrastructure-Diagrams"
+
+# Obtener el App ID
+APP_ID=$(az ad app list --display-name "GitHub-Azure-Infrastructure-Diagrams" --query '[0].appId' -o tsv)
+
+# Crear service principal
+az ad sp create --id $APP_ID
+
+# Asignar permisos de lectura
+az role assignment create \
+  --assignee $APP_ID \
   --role "Reader" \
-  --scopes /subscriptions/{TU_SUBSCRIPTION_ID} \
-  --sdk-auth
+  --scope "/subscriptions/{TU_SUBSCRIPTION_ID}"
+
+# Configurar federated credentials para GitHub
+az ad app federated-credential create \
+  --id $APP_ID \
+  --parameters '{
+    "name": "github-actions",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:OWNER/REPO:ref:refs/heads/main",
+    "description": "GitHub Actions",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
 ```
 
-**Guarda la salida JSON** - la necesitarás en el siguiente paso.
+**Nota**: Reemplaza `OWNER/REPO` con tu usuario/organización y nombre del repositorio.
 
-### Paso 2: Configurar Secreto en GitHub
+### Paso 2: Configurar Secretos en GitHub
 
 1. Ve a tu repositorio en GitHub
 2. **Settings** → **Secrets and variables** → **Actions**
-3. Clic en **New repository secret**
-4. **Name**: `AZURE_CREDENTIALS`
-5. **Value**: Pega el JSON completo del paso anterior
-6. Clic en **Add secret**
+3. Crea estos secretos:
+   - **Name**: `AZURE_CLIENT_ID` **Value**: El App ID del paso anterior
+   - **Name**: `AZURE_TENANT_ID` **Value**: Tu Tenant ID de Azure
+   - **Name**: `AZURE_SUBSCRIPTION_ID` **Value**: Tu Subscription ID
 
 ### Paso 3: Crear Workflow
 
@@ -37,13 +56,27 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Lunes 6 AM
 
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read    # Required for checkout
+
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: rfernandezdo/inventariographdrawio@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Generate Infrastructure Diagram
+        uses: rfernandezdo/inventariographdrawio@v1
+        with:
           diagram-mode: 'all'
           output-path: 'docs/azure-infrastructure.drawio'
           commit-changes: 'pr'
@@ -62,16 +95,23 @@ jobs:
 
 ```yaml
 # Diagrama para tenant específico
-- uses: rfernandezdo/inventariographdrawio@v1
+- name: Azure Login
+  uses: azure/login@v2
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+- name: Generate Tenant Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
     tenant-filter: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
     output-path: 'docs/tenant-a-infrastructure.drawio'
 
 # Todos los tenants
-- uses: rfernandezdo/inventariographdrawio@v1
+- name: Generate All Tenants Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     all-tenants: true
     output-path: 'docs/all-tenants-infrastructure.drawio'
 ```
@@ -80,16 +120,23 @@ jobs:
 
 ```yaml
 # Solo recursos de producción
-- uses: rfernandezdo/inventariographdrawio@v1
+- name: Azure Login
+  uses: azure/login@v2
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+- name: Generate Production Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
+  with:
     include-ids: '/subscriptions/prod-subscription-id /resourceGroups/prod-rg'
     output-path: 'docs/production-only.drawio'
 
 # Excluir recursos de desarrollo
-- uses: rfernandezdo/inventariographdrawio@v1
+- name: Generate Without Dev Diagram
+  uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
     exclude-ids: '/subscriptions/dev-subscription-id'
     output-path: 'docs/without-dev.drawio'
 ```
@@ -114,7 +161,6 @@ commit-changes: 'none'
 
 | Parámetro | Descripción | Requerido | Defecto |
 |-----------|-------------|-----------|---------|
-| `azure-credentials` | Credenciales del service principal (JSON) | ✅ | - |
 | `diagram-mode` | Tipo: `infrastructure`, `components`, `network`, `all` | ❌ | `infrastructure` |
 | `output-path` | Ruta del archivo .drawio | ❌ | `azure-infrastructure-diagram.drawio` |
 | `tenant-filter` | ID del tenant específico | ❌ | - |
@@ -133,11 +179,18 @@ commit-changes: 'none'
 ## 📊 Salidas (Outputs)
 
 ```yaml
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
 - name: Generate Diagrams
   id: generate
   uses: rfernandezdo/inventariographdrawio@v1
   with:
-    azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+    diagram-mode: 'all'
 
 - name: Use Outputs
   run: |
@@ -154,15 +207,18 @@ commit-changes: 'none'
 ### Permisos Azure Requeridos
 
 ```bash
+# Obtener el Application ID creado en el Paso 1
+APP_ID=$(az ad app list --display-name "GitHub-Azure-Infrastructure-Diagrams" --query '[0].appId' -o tsv)
+
 # Mínimo: Reader en suscripciones que quieres diagramar
 az role assignment create \
-  --assignee {SERVICE_PRINCIPAL_ID} \
+  --assignee $APP_ID \
   --role "Reader" \
   --scope "/subscriptions/{SUBSCRIPTION_ID}"
 
 # Para múltiples suscripciones:
 az role assignment create \
-  --assignee {SERVICE_PRINCIPAL_ID} \
+  --assignee $APP_ID \
   --role "Reader" \
   --scope "/managementGroups/{MANAGEMENT_GROUP_ID}"
 ```
@@ -173,6 +229,7 @@ En tu workflow, asegúrate de tener los permisos necesarios:
 
 ```yaml
 permissions:
+  id-token: write        # Requerido para OIDC
   contents: write        # Para commits
   pull-requests: write   # Para crear PRs
   issues: write          # Para crear issues (opcional)
@@ -182,19 +239,30 @@ permissions:
 
 - ✅ **La action no expone datos sensibles** en logs
 - ✅ **Solo usa permisos de lectura** en Azure
+- ✅ **Usa OIDC (sin secretos)** para autenticación segura
 - ✅ **No envía datos a servicios externos**
 - ✅ **Los diagramas se quedan en tu repositorio**
 
 ## 🔍 Resolución de Problemas
 
-### Error: "Az CLI Login failed"
+### Error: "Azure Login failed"
 
+1. **Verifica que los secretos estén configurados correctamente:**
+   - `AZURE_CLIENT_ID`
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+
+2. **Verifica que el federated credential esté configurado:**
+```bash
+# Listar federated credentials
+az ad app federated-credential list --id $APP_ID
+```
+
+3. **Verifica permisos OIDC en el workflow:**
 ```yaml
-# Verifica el formato del secreto AZURE_CREDENTIALS
-{
-  "clientId": "...",
-  "clientSecret": "...", 
-  "subscriptionId": "...",
+permissions:
+  id-token: write
+  contents: read
   "tenantId": "..."
 }
 ```
@@ -232,13 +300,28 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Lunes 6 AM
 
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - uses: rfernandezdo/inventariographdrawio@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Generate Infrastructure Report
+        uses: rfernandezdo/inventariographdrawio@v2
+        with:
           diagram-mode: 'all'
           export-json: 'reports/azure-inventory-${{ github.run_number }}.json'
           output-path: 'reports/azure-diagrams-${{ github.run_number }}.drawio'
@@ -254,16 +337,29 @@ on:
   schedule:
     - cron: '0 */6 * * *'  # Cada 6 horas
 
+permissions:
+  id-token: write
+  contents: write
+  issues: write
+
 jobs:
   detect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: rfernandezdo/inventariographdrawio@v1
-        id: current
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Generate Current Snapshot
+        id: current
+        uses: rfernandezdo/inventariographdrawio@v2
+        with:
           export-json: 'current.json'
           commit-changes: 'none'
       
@@ -279,6 +375,10 @@ jobs:
 name: Multi-Environment Docs
 on:
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
   generate-docs:
@@ -298,9 +398,19 @@ jobs:
             subscription: '/subscriptions/dev-sub-id'
     
     steps:
-      - uses: rfernandezdo/inventariographdrawio@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login for ${{ matrix.environment }}
+        uses: azure/login@v2
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ matrix.tenant }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Generate ${{ matrix.environment }} Diagram
+        uses: rfernandezdo/inventariographdrawio@v2
+        with:
           tenant-filter: ${{ matrix.tenant }}
           include-ids: ${{ matrix.subscription }}
           output-path: 'docs/${{ matrix.environment }}-infrastructure.drawio'
