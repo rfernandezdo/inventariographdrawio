@@ -3,6 +3,7 @@ Punto de entrada principal y lógica de línea de comandos.
 """
 
 import argparse
+import os
 import sys
 from azure_api import get_azure_resources, find_dependencies, export_cache_to_json, load_from_json_export, clear_cache, get_current_tenant_id, list_available_tenants, check_azure_login
 from drawio_export import generate_drawio_file, filter_items_and_dependencies
@@ -226,9 +227,23 @@ def main():
         traceback.print_exc()
         sys.exit(1)
     try:
+        # Crear directorio padre si no existe
+        output_dir = os.path.dirname(output_file)
+        if output_dir and not os.path.exists(output_dir):
+            print(f"INFO: Creando directorio: {output_dir}")
+            os.makedirs(output_dir, exist_ok=True)
+            
+        try:
+        # Crear el directorio de salida si no existe
+        output_dir = os.path.dirname(output_file)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+            print(f"INFO: Directorio creado: {output_dir}")
+        
         with open(output_file, "w", encoding='utf-8') as f:
             f.write(drawio_content)
-        print(f"\n¡ÉXITO! Se ha creado el diagrama de '{args.diagram_mode}' en '{output_file}'.")
+        print(f"
+¡ÉXITO! Se ha creado el diagrama de '{args.diagram_mode}' en '{output_file}'.")
         
         if target_tenant:
             print(f"\nTenant filtrado: {target_tenant}")

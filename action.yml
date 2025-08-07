@@ -216,13 +216,38 @@ runs:
     - name: Move files to workspace
       shell: bash
       run: |
-        # Move generated files from action directory to workspace
-        if [[ -f "${{ github.action_path }}/${{ inputs.output-path }}" ]]; then
-          cp "${{ github.action_path }}/${{ inputs.output-path }}" "${{ github.workspace }}/${{ inputs.output-path }}"
+        # Create target directory in workspace if it doesn't exist
+        TARGET_DIR="$(dirname "${{ github.workspace }}/${{ inputs.output-path }}")"
+        if [[ ! -d "$TARGET_DIR" ]]; then
+          echo "Creating target directory: $TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
         fi
         
-        if [[ "${{ inputs.export-json }}" != "" && -f "${{ github.action_path }}/${{ inputs.export-json }}" ]]; then
-          cp "${{ github.action_path }}/${{ inputs.export-json }}" "${{ github.workspace }}/${{ inputs.export-json }}"
+        # Move generated files from action directory to workspace
+        if [[ -f "${{ github.action_path }}/${{ inputs.output-path }}" ]]; then
+          echo "Moving diagram file to workspace..."
+          cp "${{ github.action_path }}/${{ inputs.output-path }}" "${{ github.workspace }}/${{ inputs.output-path }}"
+          echo "✓ Diagram file moved to: ${{ github.workspace }}/${{ inputs.output-path }}"
+        else
+          echo "ERROR: Diagram file not found at: ${{ github.action_path }}/${{ inputs.output-path }}"
+          echo "Files in action directory:"
+          ls -la "${{ github.action_path }}/" || echo "Action directory not accessible"
+          exit 1
+        fi
+        
+        if [[ "${{ inputs.export-json }}" != "" ]]; then
+          if [[ -f "${{ github.action_path }}/${{ inputs.export-json }}" ]]; then
+            # Create directory for JSON file if needed
+            JSON_TARGET_DIR="$(dirname "${{ github.workspace }}/${{ inputs.export-json }}")"
+            if [[ ! -d "$JSON_TARGET_DIR" ]]; then
+              mkdir -p "$JSON_TARGET_DIR"
+            fi
+            echo "Moving JSON export file to workspace..."
+            cp "${{ github.action_path }}/${{ inputs.export-json }}" "${{ github.workspace }}/${{ inputs.export-json }}"
+            echo "✓ JSON export file moved to: ${{ github.workspace }}/${{ inputs.export-json }}"
+          else
+            echo "WARNING: JSON export file not found at: ${{ github.action_path }}/${{ inputs.export-json }}"
+          fi
         fi
     
     - name: Commit and Push Changes
