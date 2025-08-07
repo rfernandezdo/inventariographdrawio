@@ -86,6 +86,25 @@ def get_current_tenant_id():
         print(f"ADVERTENCIA: No se pudo obtener el tenant actual: {e}")
         return None
 
+def check_azure_login():
+    """Verifica si el usuario está autenticado en Azure CLI."""
+    try:
+        cmd = ["az", "account", "show"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        account_info = json.loads(result.stdout)
+        print(f"INFO: Autenticado como: {account_info.get('user', {}).get('name', 'Usuario desconocido')}")
+        print(f"INFO: Suscripción activa: {account_info.get('name', 'Desconocida')} ({account_info.get('id', 'ID desconocido')})")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: No se ha iniciado sesión en Azure CLI.")
+        print(f"Por favor ejecuta: az login")
+        if e.stderr:
+            print(f"Detalles del error: {e.stderr}")
+        return False
+    except Exception as e:
+        print(f"ERROR: Error verificando autenticación de Azure: {e}")
+        return False
+
 def list_available_tenants():
     """Lista todos los tenants disponibles desde el CLI de Azure."""
     try:
@@ -260,16 +279,47 @@ def run_az_graph_query_with_pagination(query, use_cache=True, cache_key=None):
     
     all_results = []
     skip_token = None
-    while True:
-        cmd = ["az", "graph", "query", "-q", query, "--first", "1000", "--output", "json"]
-        if skip_token:
-            cmd += ["--skip-token", skip_token]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
-        data = json.loads(result.stdout)
-        all_results.extend(data.get('data', []))
-        skip_token = data.get('skipToken')
-        if not skip_token:
-            break
+    page_count = 0
+    
+    try:
+        while True:
+            page_count += 1
+            print(f"INFO: Consultando página {page_count} de Resource Graph...")
+            
+            cmd = ["az", "graph", "query", "-q", query, "--first", "1000", "--output", "json"]
+            if skip_token:
+                cmd += ["--skip-token", skip_token]
+            
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8', timeout=120)
+                data = json.loads(result.stdout)
+                page_results = data.get('data', [])
+                all_results.extend(page_results)
+                print(f"INFO: Página {page_count}: {len(page_results)} elementos")
+                
+                skip_token = data.get('skipToken')
+                if not skip_token:
+                    break
+                    
+            except subprocess.TimeoutExpired:
+                print(f"ERROR: Timeout en la consulta de Resource Graph (página {page_count})")
+                raise
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Respuesta JSON inválida de Azure Resource Graph: {e}")
+                print(f"Stdout: {result.stdout[:500]}...")
+                raise
+            except subprocess.CalledProcessError as e:
+                print(f"ERROR: Falló comando az graph query (página {page_count})")
+                print(f"Código de salida: {e.returncode}")
+                if e.stderr:
+                    print(f"Error: {e.stderr}")
+                raise
+    
+    except Exception as e:
+        print(f"ERROR: Fallo en consulta de Resource Graph después de {page_count} páginas: {e}")
+        raise
+    
+    print(f"INFO: Consulta completada. Total: {len(all_results)} elementos en {page_count} páginas")
     
     if use_cache and cache_key:
         save_to_cache(all_results, f'graph_query_{cache_key}')
@@ -282,24 +332,41 @@ def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None)
         print("INFO: Forzando actualización, ignorando cache...")
         clear_cache()
     
+    # Verificar Azure CLI
+    print("INFO: Verificando Azure CLI...")
+    if not os.system("az version > " + ("nul" if os.name == 'nt' else "/dev/null 2>&1")) == 0:
+        print("\nERROR: Azure CLI no está instalado o no está en el PATH.")
+        print("Por favor instala Azure CLI desde: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli")
+        sys.exit(1)
+    
+    # Verificar autenticación
+    print("INFO: Verificando autenticación...")
+    if not check_azure_login():
+        sys.exit(1)
+    
     # Información del tenant
     if tenant_filter:
         print(f"INFO: Filtrando recursos por tenant: {tenant_filter}")
     
     print("INFO: Obteniendo management groups (REST API o PowerShell) y recursos con az graph query...")
-    if not os.system("az version > " + ("nul" if os.name == 'nt' else "/dev/null 2>&1")) == 0:
-        print("\nERROR: Azure CLI no está instalado o no está en el PATH.")
-        sys.exit(1)
-        
+    
     # Obtener management groups con cache
-    mg_items = get_azure_management_groups(use_cache=use_cache)
-    mg_items = enrich_management_groups_with_ancestors(mg_items)
+    try:
+        mg_items = get_azure_management_groups(use_cache=use_cache)
+        mg_items = enrich_management_groups_with_ancestors(mg_items)
+        print(f"INFO: Se encontraron {len(mg_items)} management groups")
+    except Exception as e:
+        print(f"ERROR: Error obteniendo management groups: {e}")
+        raise
     
     try:
+        print("INFO: Consultando recursos de Azure...")
         rest_query = "resourcecontainers | where type != 'microsoft.management/managementgroups' | union resources"
         rest_items = run_az_graph_query_with_pagination(rest_query, use_cache=use_cache, cache_key='all_resources')
         print(f"INFO: Se han encontrado {len(rest_items)} recursos y resource containers (sin management groups).")
         
+        # Procesar subnets de VNets
+        print("INFO: Procesando subnets de VNets...")
         extra_subnets = []
         for vnet in rest_items:
             if vnet.get('type', '').lower() == 'microsoft.network/virtualnetworks':
@@ -326,7 +393,10 @@ def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None)
         
         # Aplicar filtrado por tenant si se especifica
         if tenant_filter:
+            print(f"INFO: Aplicando filtro por tenant: {tenant_filter}")
+            original_count = len(all_items)
             all_items = filter_items_by_tenant(all_items, tenant_filter)
+            print(f"INFO: Filtrado completado: {original_count} → {len(all_items)} elementos")
         
         # Guardar combinación final en cache si se está usando cache
         if use_cache:
@@ -334,10 +404,25 @@ def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None)
             save_to_cache(all_items, f'final_inventory{cache_suffix}')
             
         return all_items
+        
+    except subprocess.CalledProcessError as e:
+        print(f"\nERROR: Falló la consulta de Azure Resource Graph.")
+        print(f"Código de salida: {e.returncode}")
+        if e.stderr:
+            print(f"Error stderr: {e.stderr}")
+        if e.stdout:
+            print(f"Error stdout: {e.stdout}")
+        print("\nVerifica:")
+        print("1. Que has iniciado sesión: az login")
+        print("2. Que tienes permisos de Reader en las suscripciones")
+        print("3. Que la extensión resource-graph está instalada: az extension add --name resource-graph")
+        raise
     except Exception as e:
-        print(f"\nERROR al ejecutar 'az graph query': {e}")
+        print(f"\nERROR al ejecutar consulta de Azure: {e}")
         print("Asegúrate de haber iniciado sesión ('az login') y tener los permisos necesarios.")
-        sys.exit(1)
+        import traceback
+        traceback.print_exc()
+        raise
 
 def find_dependencies(all_items):
     print("INFO: Analizando dependencias...")

@@ -112,7 +112,9 @@ runs:
       with:
         azcliversion: latest
         inlineScript: |
-          az extension add --name resource-graph
+          echo "Installing Azure CLI extensions..."
+          az extension add --name resource-graph --yes
+          echo "Azure CLI extensions installed successfully"
     
     - name: Install Python dependencies
       shell: bash
@@ -159,15 +161,46 @@ runs:
           ARGS="$ARGS --export-json ${{ inputs.export-json }}"
         fi
         
-        echo "Running: python src/cli.py $ARGS"
+        echo "=== Azure Infrastructure Diagram Generator ==="
+        echo "Working directory: $(pwd)"
+        echo "Python version: $(python --version)"
+        echo "Azure CLI version: $(az version --output tsv --query '\"azure-cli\"')"
+        echo "Running command: python src/cli.py $ARGS"
+        echo ""
+        
+        # Check Azure login status
+        echo "Checking Azure authentication..."
+        if ! az account show > /dev/null 2>&1; then
+          echo "ERROR: Not logged in to Azure CLI"
+          echo "The Azure CLI session may have expired or not been properly initialized"
+          exit 1
+        fi
         
         # Execute the command and capture output
+        set +e  # Don't exit on error immediately
         OUTPUT=$(python src/cli.py $ARGS 2>&1)
+        EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+        
         echo "$OUTPUT"
         
+        if [ $EXIT_CODE -ne 0 ]; then
+          echo ""
+          echo "=== EXECUTION FAILED ==="
+          echo "Exit code: $EXIT_CODE"
+          echo "Command was: python src/cli.py $ARGS"
+          echo ""
+          echo "Debugging information:"
+          echo "- Working directory: $(pwd)"
+          echo "- Files in src/: $(ls -la src/ 2>/dev/null || echo 'src/ directory not found')"
+          echo "- Python path: $(which python)"
+          echo "- Azure CLI path: $(which az)"
+          exit $EXIT_CODE
+        fi
+        
         # Extract metrics from output for action outputs
-        TOTAL_RESOURCES=$(echo "$OUTPUT" | grep -o "total_items.*[0-9]*" | grep -o "[0-9]*" | head -1 || echo "0")
-        TOTAL_DEPS=$(echo "$OUTPUT" | grep -o "total_dependencies.*[0-9]*" | grep -o "[0-9]*" | head -1 || echo "0")
+        TOTAL_RESOURCES=$(echo "$OUTPUT" | grep -o "Se encontraron [0-9]* recursos" | grep -o "[0-9]*" | head -1 || echo "0")
+        TOTAL_DEPS=$(echo "$OUTPUT" | grep -o "Se encontraron [0-9]* dependencias" | grep -o "[0-9]*" | head -1 || echo "0")
         TENANT_ID=$(echo "$OUTPUT" | grep -o "Tenant filtrado: [a-f0-9-]*" | cut -d' ' -f3 || echo "")
         
         # Set action outputs
