@@ -1,7 +1,9 @@
 name: Infrastructure Change Detection
 on:
-  schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
+  # Schedule is commented out to run this workflow on demand only.
+  # Uncomment the lines below to enable automatic infrastructure monitoring every 6 hours:
+  # schedule:
+  #   - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:
 
 permissions:
