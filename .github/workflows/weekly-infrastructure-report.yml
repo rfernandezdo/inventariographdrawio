@@ -1,8 +1,10 @@
 name: Weekly Azure Infrastructure Report
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 6 * * 1'  # Every Monday at 6 AM UTC
+  # Schedule is commented out to run this workflow on demand only.
+  # Uncomment the lines below to enable automatic weekly execution:
+  # schedule:
+  #   - cron: '0 6 * * 1'  # Every Monday at 6 AM UTC
 
 permissions:
   id-token: write
