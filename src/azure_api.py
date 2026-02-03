@@ -7,8 +7,26 @@ import os
 import sys
 import json
 import subprocess
+import platform
 from datetime import datetime, timedelta
 from pathlib import Path
+
+# Detectar si estamos en Windows para subprocess
+IS_WINDOWS = platform.system() == 'Windows'
+
+def run_az_command(cmd, **kwargs):
+    """Ejecuta comando de Azure CLI con configuración apropiada para el sistema operativo."""
+    # En Windows, necesitamos shell=True para ejecutar az.cmd
+    if IS_WINDOWS:
+        kwargs['shell'] = True
+        # En Windows, remover encoding explícito y usar errors='replace' para evitar problemas UTF-8
+        if 'encoding' in kwargs:
+            del kwargs['encoding']
+        kwargs.setdefault('errors', 'replace')  # Reemplazar caracteres problemáticos
+    else:
+        # En Linux/Mac, asegurar que se use UTF-8 si no se especifica
+        kwargs.setdefault('encoding', 'utf-8')
+    return subprocess.run(cmd, **kwargs)
 
 # Configuración del cache
 CACHE_DIR = Path('.azure_cache')
@@ -79,7 +97,7 @@ def get_current_tenant_id():
     """Obtiene el Tenant ID actual del CLI de Azure."""
     try:
         cmd = ["az", "account", "show", "--query", "tenantId", "-o", "tsv"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        result = run_az_command(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         tenant_id = result.stdout.strip()
         return tenant_id if tenant_id else None
     except Exception as e:
@@ -90,7 +108,7 @@ def check_azure_login():
     """Verifica si el usuario está autenticado en Azure CLI."""
     try:
         cmd = ["az", "account", "show"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        result = run_az_command(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         account_info = json.loads(result.stdout)
         print(f"INFO: Autenticado como: {account_info.get('user', {}).get('name', 'Usuario desconocido')}")
         print(f"INFO: Suscripción activa: {account_info.get('name', 'Desconocida')} ({account_info.get('id', 'ID desconocido')})")
@@ -109,7 +127,7 @@ def list_available_tenants():
     """Lista todos los tenants disponibles desde el CLI de Azure."""
     try:
         cmd = ["az", "account", "list", "--query", "[].{name:name, tenantId:tenantId, subscriptionId:id}", "-o", "json"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        result = run_az_command(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         tenants = json.loads(result.stdout)
         return tenants
     except Exception as e:
@@ -200,46 +218,59 @@ def get_azure_management_groups(use_cache=True):
             return cached_data
     
     import platform
+    mg_data = []
+    
+    # Intentar con PowerShell en Windows
     if platform.system() == "Windows":
         mg_data = get_azure_management_groups_with_powershell()
-    else:
-        try:
-            import requests
-            token_cmd = ["az", "account", "get-access-token", "--resource", "https://management.azure.com/", "--output", "json"]
-            token_result = subprocess.run(token_cmd, capture_output=True, text=True, check=True, encoding='utf-8')
-            token = json.loads(token_result.stdout)["accessToken"]
-            url = "https://management.azure.com/providers/Microsoft.Management/managementGroups?api-version=2021-04-01&$expand=parent"
-            headers = {"Authorization": f"Bearer {token}"}
-            mg_list = []
-            next_link = url
-            while next_link:
-                resp = requests.get(next_link, headers=headers)
-                if resp.status_code != 200:
-                    print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {resp.status_code} {resp.text}")
-                    break
-                data = resp.json()
-                for mg in data.get("value", []):
-                    mg_obj = {
-                        'id': mg.get('id'),
-                        'type': mg.get('type', 'microsoft.management/managementgroups'),
-                        'name': mg.get('name'),
-                        'displayName': mg.get('properties', {}).get('displayName'),
-                        'properties': mg.get('properties', {}),
-                        'parent': mg.get('properties', {}).get('parent', {}).get('id')
-                    }
-                    mg_list.append(mg_obj)
-                next_link = data.get("nextLink")
-            print(f"INFO: Se han encontrado {len(mg_list)} management groups (REST API).")
-            
+        if mg_data:
+            print(f"INFO: Se han encontrado {len(mg_data)} management groups (PowerShell).")
             if use_cache:
-                save_to_cache(mg_list, 'management_groups')
-                
-            return mg_list
-        except Exception as e:
-            print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {e}")
-            return []
+                save_to_cache(mg_data, 'management_groups')
+            return mg_data
+    
+    # Fallback a REST API si PowerShell falla o no está en Windows
+    try:
+        import requests
+        token_cmd = ["az", "account", "get-access-token", "--resource", "https://management.azure.com/", "--output", "json"]
+        token_result = run_az_command(token_cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        token = json.loads(token_result.stdout)["accessToken"]
+        url = "https://management.azure.com/providers/Microsoft.Management/managementGroups?api-version=2021-04-01&$expand=parent"
+        headers = {"Authorization": f"Bearer {token}"}
+        mg_list = []
+        next_link = url
+        while next_link:
+            resp = requests.get(next_link, headers=headers)
+            if resp.status_code != 200:
+                print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {resp.status_code} {resp.text}")
+                break
+            data = resp.json()
+            for mg in data.get("value", []):
+                mg_obj = {
+                    'id': mg.get('id'),
+                    'type': mg.get('type', 'microsoft.management/managementgroups'),
+                    'name': mg.get('name'),
+                    'displayName': mg.get('properties', {}).get('displayName'),
+                    'properties': mg.get('properties', {}),
+                    'parent': mg.get('properties', {}).get('parent', {}).get('id')
+                }
+                mg_list.append(mg_obj)
+            next_link = data.get("nextLink")
+        print(f"INFO: Se han encontrado {len(mg_list)} management groups (REST API).")
+        
+        if use_cache:
+            save_to_cache(mg_list, 'management_groups')
+            
+        return mg_list
+    except Exception as e:
+        print(f"ADVERTENCIA: No se pudieron obtener management groups vía REST API: {e}")
+        return []
 
 def enrich_management_groups_with_ancestors(mg_list):
+    """Enriquece management groups con información de ancestros."""
+    if not mg_list:
+        return []
+    
     for i, mg in enumerate(mg_list):
         mg_name = mg.get('name')
         if not mg_name:
@@ -250,7 +281,7 @@ def enrich_management_groups_with_ancestors(mg_list):
             cmd = [
                 "az", "graph", "query", "-q", query, "--management-groups", mg_name, "--output", "json"
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+            result = run_az_command(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
             data = json.loads(result.stdout)
             if data.get('data'):
                 mg_full = data['data'][0]
@@ -291,7 +322,7 @@ def run_az_graph_query_with_pagination(query, use_cache=True, cache_key=None):
                 cmd += ["--skip-token", skip_token]
             
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8', timeout=120)
+                result = run_az_command(cmd, capture_output=True, text=True, check=True, timeout=120, encoding='utf-8')
                 data = json.loads(result.stdout)
                 page_results = data.get('data', [])
                 all_results.extend(page_results)
@@ -326,7 +357,65 @@ def run_az_graph_query_with_pagination(query, use_cache=True, cache_key=None):
     
     return all_results
 
-def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None):
+def query_specific_resource_ids(resource_ids):
+    """
+    Consulta recursos específicos por sus IDs en Azure Resource Graph.
+    Esto es útil cuando se necesita obtener recursos que no están en los primeros 1000 resultados.
+    """
+    if not resource_ids:
+        return []
+    
+    print(f"INFO: Consultando {len(resource_ids)} recursos específicos por ID...")
+    
+    all_results = []
+    # Procesar en lotes de 10 IDs para evitar queries muy largas
+    batch_size = 10
+    
+    for i in range(0, len(resource_ids), batch_size):
+        batch = resource_ids[i:i+batch_size]
+        
+        # Construir query con condiciones OR para cada ID
+        conditions = []
+        parent_conditions = []
+        
+        for rid in batch:
+            # Limpiar el ID y hacerlo case-insensitive
+            clean_id = rid.strip()
+            conditions.append(f"id =~ '{clean_id}'")
+            
+            # Si es un Resource Group, también buscar recursos que pertenezcan a él
+            if '/resourcegroups/' in clean_id.lower() and '/providers/' not in clean_id.lower():
+                parent_conditions.append(f"id startswith '{clean_id}/'")
+        
+        # Construir la query completa
+        where_clause = " or ".join(conditions)
+        query_parts = [
+            f"resourcecontainers | where {where_clause}",
+            f"resources | where {where_clause}"
+        ]
+        
+        # Agregar búsqueda de recursos hijos si hay Resource Groups
+        if parent_conditions:
+            parent_where = " or ".join(parent_conditions)
+            query_parts.append(f"resources | where {parent_where}")
+        
+        query = " | union ".join(f"({part})" for part in query_parts)
+        
+        try:
+            cmd = ["az", "graph", "query", "-q", query, "--first", "1000", "--output", "json"]
+            result = run_az_command(cmd, capture_output=True, text=True, check=True, timeout=120, encoding='utf-8')
+            data = json.loads(result.stdout)
+            batch_results = data.get('data', [])
+            all_results.extend(batch_results)
+            print(f"INFO: Lote {i//batch_size + 1}: {len(batch_results)} recursos encontrados")
+        except Exception as e:
+            print(f"ADVERTENCIA: Error consultando lote {i//batch_size + 1}: {e}")
+            continue
+    
+    print(f"INFO: Total de recursos específicos obtenidos: {len(all_results)}")
+    return all_results
+
+def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None, specific_ids=None):
     """Obtiene todos los recursos de Azure con opciones de cache y filtrado por tenant."""
     if force_refresh:
         print("INFO: Forzando actualización, ignorando cache...")
@@ -361,9 +450,27 @@ def get_azure_resources(use_cache=True, force_refresh=False, tenant_filter=None)
     
     try:
         print("INFO: Consultando recursos de Azure...")
+        
+        # Si se especifican IDs específicos, consultarlos directamente además de la consulta general
+        specific_items = []
+        if specific_ids:
+            specific_items = query_specific_resource_ids(specific_ids)
+            if specific_items:
+                print(f"INFO: {len(specific_items)} recursos específicos obtenidos por ID")
+        
+        # Consulta general de todos los recursos
         rest_query = "resourcecontainers | where type != 'microsoft.management/managementgroups' | union resources"
         rest_items = run_az_graph_query_with_pagination(rest_query, use_cache=use_cache, cache_key='all_resources')
         print(f"INFO: Se han encontrado {len(rest_items)} recursos y resource containers (sin management groups).")
+        
+        # Combinar resultados específicos con los generales, evitando duplicados
+        if specific_items:
+            existing_ids = {item['id'].lower() for item in rest_items}
+            for item in specific_items:
+                if item['id'].lower() not in existing_ids:
+                    rest_items.append(item)
+                    existing_ids.add(item['id'].lower())
+            print(f"INFO: Recursos totales después de combinar con específicos: {len(rest_items)}")
         
         # Procesar subnets de VNets
         print("INFO: Procesando subnets de VNets...")
