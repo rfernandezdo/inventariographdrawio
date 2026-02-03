@@ -159,7 +159,13 @@ def main():
         print("INFO: Consultando recursos de Azure...")
         use_cache = not args.no_cache
         try:
-            azure_items = get_azure_resources(use_cache=use_cache, force_refresh=args.force_refresh, tenant_filter=target_tenant)
+            # Pasar los IDs específicos a get_azure_resources para consultarlos directamente
+            azure_items = get_azure_resources(
+                use_cache=use_cache, 
+                force_refresh=args.force_refresh, 
+                tenant_filter=target_tenant,
+                specific_ids=args.include_ids  # Pasar los IDs específicos aquí
+            )
             if not azure_items:
                 print("\nAVISO: No se encontraron elementos. Revisa tu login ('az login') y permisos.")
                 sys.exit(0)
