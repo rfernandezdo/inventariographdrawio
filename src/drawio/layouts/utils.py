@@ -250,3 +250,93 @@ def extract_resource_group_from_id(azure_id):
         pass
     
     return None
+
+
+# Categorías funcionales usadas por los modos 'components' y 'hld'. Centralizadas
+# aquí para que ambos layouts clasifiquen los recursos exactamente igual
+# (evita reglas duplicadas y divergentes entre módulos).
+COMPONENT_CATEGORIES = [
+    'Compute', 'Storage', 'Network', 'Database', 'Analytics', 'IoT',
+    'Security', 'AI/ML', 'Management', 'Media', 'Other'
+]
+
+GOVERNANCE_RESOURCE_TYPES = {
+    'microsoft.management/managementgroups',
+    'microsoft.resources/subscriptions',
+    'microsoft.resources/subscriptions/resourcegroups',
+}
+
+
+def classify_component_category(resource_type):
+    """
+    Clasifica un recurso en una categoría funcional (bill of materials).
+
+    Args:
+        resource_type (str): Tipo de recurso de Azure (con o sin mayúsculas)
+
+    Returns:
+        str | None: Nombre de categoría (ver COMPONENT_CATEGORIES), o None si el
+            recurso es de gobierno (Management Group/Subscription/Resource Group)
+            y debe excluirse de estos diagramas.
+    """
+    resource_type_lower = (resource_type or '').lower()
+
+    if resource_type_lower in GOVERNANCE_RESOURCE_TYPES:
+        return None
+
+    if any(t in resource_type_lower for t in [
+        'compute/virtualmachines', 'web/sites', 'containerservice',
+        'web/serverfarms', 'compute/availabilitysets', 'compute/virtualmachinescalesets',
+        'batch/batchaccounts', 'app/managedenvironments', 'app/containerapps',
+        'appplatform/', 'servicefabric/', 'desktopvirtualization/', 'compute/galleries',
+        'redhatopenshift/'
+    ]):
+        return 'Compute'
+
+    if any(t in resource_type_lower for t in [
+        'storage/storageaccounts', 'compute/disks', 'compute/diskencryptionsets',
+        'netapp/', 'storagecache/', 'databoxedge/', 'storagesync/'
+    ]):
+        return 'Storage'
+
+    if 'network/' in resource_type_lower:
+        return 'Network'
+
+    if any(t in resource_type_lower for t in ['sql/', 'documentdb/', 'dbfor', 'cache/', 'search/']):
+        return 'Database'
+
+    if any(t in resource_type_lower for t in [
+        'synapse/', 'datafactory/', 'eventhub/', 'purview/', 'kusto/',
+        'streamanalytics/', 'hdinsight/', 'datalakeanalytics/', 'datalakestore/',
+        'analysisservices/', 'powerbidedicated/', 'databricks/'
+    ]):
+        return 'Analytics'
+
+    if any(t in resource_type_lower for t in [
+        'devices/iothubs', 'devices/provisioningservices', 'digitaltwins/',
+        'maps/', 'iotcentral/', 'timeseriesinsights/'
+    ]):
+        return 'IoT'
+
+    if any(t in resource_type_lower for t in [
+        'keyvault/', 'security/', 'managedidentity/', 'aad/', 'securityinsights/'
+    ]):
+        return 'Security'
+
+    if any(t in resource_type_lower for t in [
+        'cognitiveservices/', 'machinelearningservices/', 'botservice/'
+    ]):
+        return 'AI/ML'
+
+    if any(t in resource_type_lower for t in [
+        'insights/', 'operationalinsights/', 'automation/',
+        'operationsmanagement/', 'recoveryservices/', 'blueprint/',
+        'policyinsights/', 'hybridcompute/', 'consumption/', 'advisor/',
+        'servicebus/', 'eventgrid/', 'logic/', 'apimanagement/'
+    ]):
+        return 'Management'
+
+    if any(t in resource_type_lower for t in ['cdn/', 'media/']):
+        return 'Media'
+
+    return 'Other'

@@ -199,6 +199,9 @@ def _create_edges(root, diagram_mode, tree_edges, dependencies, items, azure_id_
         # Para otros modos (components, network), determinar las dependencias según las opciones
         if diagram_mode == 'network' and no_hierarchy_edges:
             edges_to_create = _filter_network_hierarchical_edges(dependencies, items)
+        elif diagram_mode == 'components':
+            from .filtering import filter_governance_dependencies
+            edges_to_create = filter_governance_dependencies(dependencies, items)
         else:
             # Para otros modos sin restricciones, usar las dependencias originales
             edges_to_create = dependencies
