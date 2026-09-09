@@ -75,3 +75,9 @@ changes-summary.md
 Thumbs.db
 *.Zone.Identifier
 .$*
+
+
+# Scratch/output directory: cualquier fichero generado (diagramas .drawio de
+# prueba, exportaciones de inventario, capturas de validación, scripts
+# temporales de un solo uso) debe crearse aquí, nunca en la raíz del repo.
+tmp/

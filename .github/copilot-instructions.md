@@ -392,6 +392,38 @@ python src/cli.py --input-json data/demo_multi_subnet_example.json --diagram-mod
 3. Confirmar que dependencias VNet/Subnet se filtran correctamente
 4. Validar que dependencias funcionales importantes se mantienen
 
+## Ficheros temporales y scripts de un solo uso
+
+### Regla: nunca generar ficheros en la raíz del repositorio
+Cualquier fichero generado al ejecutar o probar el proyecto (diagramas `.drawio` de prueba,
+`--export-json` con inventarios reales o sintéticos, capturas `.png` de validación visual,
+logs, etc.) **debe crearse siempre dentro de `tmp/`** en la raíz del repo, nunca suelto en la
+raíz ni en otras carpetas de código. `tmp/` está en `.gitignore`, así que nada de lo que se
+genere ahí puede acabar commiteado por error.
+
+```bash
+python src/cli.py --diagram-mode network --output tmp/mi_prueba.drawio
+python src/cli.py --export-json tmp/inventario_real.json ...
+```
+
+Especial atención con `--export-json`/`--input-json` contra un tenant/suscripción **real**:
+ese fichero puede contener IDs de tenant, suscripción, nombres de recursos y otros datos
+sensibles reales. Debe ir SIEMPRE a `tmp/`, nunca a la raíz ni a `data/` (esa carpeta es solo
+para fixtures sintéticas/enmascaradas pensadas para commitear, ver política de seguridad más
+abajo).
+
+### Regla: los scripts no son "de usar y tirar"
+Si una tarea requiere escribir un script para validar, comparar o generar algo (no una edición
+de código de producción), no lo dejes como un fichero suelto de scratch (tipo `.tmp_x.py` en la
+raíz). En su lugar:
+- Si es una utilidad reutilizable de línea de comandos: colócala en `tools/` (ver
+  `tools/compare_dependencies.py`, `tools/validate_action.py` como ejemplos ya existentes).
+- Si empaqueta conocimiento/instrucciones para que un agente lo reutilice en el futuro
+  (validaciones repetibles, procedimientos con pasos): créala como skill en
+  `.github/skills/<nombre-skill>/SKILL.md` + `.github/skills/<nombre-skill>/scripts/` para el
+  código que ejecuta (ver `.github/skills/validate-azure-icons/` como ejemplo ya existente).
+- Cualquier salida que ese script produzca sigue la regla anterior: a `tmp/`.
+
 ## Extensibilidad
 
 ### Añadir Nuevos Tipos de Recursos
