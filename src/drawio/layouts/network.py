@@ -18,7 +18,7 @@ PADDING = {'top': 60, 'bottom': 60, 'left': 60, 'right': 60}
 RG_GRID_SPACING = {'x': 100, 'y': 100}
 VNET_SPACING = {'y': 80}
 SUBNET_SPACING = {'y': 60}
-RESOURCE_SPACING = {'x': 150, 'y': 120}
+RESOURCE_SPACING = {'x': 210, 'y': 150}
 RESOURCES_PER_ROW = {'subnet': 2, 'vnet': 3, 'rg': 3}
 
 # Dimensiones mínimas para contenedores
@@ -30,8 +30,12 @@ CONTAINER_STYLES = {
 "subscription": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;",
 "resource_group": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#90A4AE;dashed=1;dashPattern=8 4;labelBackgroundColor=none;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
 "vnet": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=13;fontStyle=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
-"subnet": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontSize=12;fontStyle=0;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;"    
+"subnet": "container=1;rounded=0;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontSize=12;fontStyle=0;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;",
+"region": "container=0;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9575CD;dashed=1;dashPattern=12 6;fontSize=13;fontStyle=2;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;"
 }
+
+# Margen del rect\u00e1ngulo de regi\u00f3n alrededor de los Resource Groups que engloba
+REGION_MARGIN = 30
 
 def _get_parent_id(azure_id: str, level: str) -> Optional[str]:
     """Extrae el ID del padre de un ID de recurso de Azure."""
@@ -457,40 +461,65 @@ def generate_network_layout(items: List[Dict], dependencies: List[Dict], **kwarg
 
             # Actualizar máximo ancho del tenant para calcular el próximo offset x
             max_tenant_width = max(max_tenant_width, sub_width)        # Offset vertical para dejar espacio para el icono de la suscripción
-        content_start_y_sub = PADDING['top'] + 60
+            content_start_y_sub = PADDING['top'] + 60
 
-        rg_counter = 0
-        for rg_id, rg_pos in rg_positions_in_sub.items():
-            rg_layout = rg_layouts_for_sub[rg_id]
-            rg_size = _calculate_rg_size(rg_layout)
-            rg_item_index = rg_layout.get('item_index')
-            
-            rg_group_id = f"{sub_group_id}_rg_{rg_counter}"
-            rg_counter += 1
-            
-            # Posición relativa al contenedor de la subscripción, con offset
-            rg_rel_x = rg_pos[0] + PADDING['left']
-            rg_rel_y = rg_pos[1] + content_start_y_sub
+            rg_counter = 0
+            rg_start_index = len(group_info)  # para insertar rectángulos de región antes de los RG
+            region_bounds = {}  # location -> [min_x, min_y, max_x, max_y]
 
-            group_info.append({
-                'id': rg_group_id, 'parent_id': sub_group_id, 'type': 'rg_container',
-                'x': rg_rel_x, 'y': rg_rel_y,
-                'width': rg_size[0], 'height': rg_size[1],
-                'label': '', 'style': CONTAINER_STYLES['resource_group']
-            })
-            if rg_item_index is not None:
-                node_positions[rg_item_index] = (20, 20) # Relativo al padre (RG container)
-                resource_to_parent_id[rg_item_index] = rg_group_id
+            for rg_id, rg_pos in rg_positions_in_sub.items():
+                rg_layout = rg_layouts_for_sub[rg_id]
+                rg_size = _calculate_rg_size(rg_layout)
+                rg_item_index = rg_layout.get('item_index')
+                
+                rg_group_id = f"{sub_group_id}_rg_{rg_counter}"
+                rg_counter += 1
+                
+                # Posición relativa al contenedor de la subscripción, con offset
+                rg_rel_x = rg_pos[0] + PADDING['left']
+                rg_rel_y = rg_pos[1] + content_start_y_sub
 
-            # Posicionar contenido del RG (pasando la posición absoluta)
-            rg_abs_x = PADDING['left'] + rg_rel_x
-            rg_abs_y = current_y + rg_rel_y
-            _position_rg_content(
-                rg_layout, rg_group_id, (rg_abs_x, rg_abs_y),
-                group_info, node_positions, resource_to_parent_id, extended_items
-            )
+                group_info.append({
+                    'id': rg_group_id, 'parent_id': sub_group_id, 'type': 'rg_container',
+                    'x': rg_rel_x, 'y': rg_rel_y,
+                    'width': rg_size[0], 'height': rg_size[1],
+                    'label': '', 'style': CONTAINER_STYLES['resource_group']
+                })
+                if rg_item_index is not None:
+                    node_positions[rg_item_index] = (20, 20) # Relativo al padre (RG container)
+                    resource_to_parent_id[rg_item_index] = rg_group_id
 
-        current_y += sub_size[1] + PADDING['top'] + PADDING['bottom'] + RG_GRID_SPACING['y']
+                # Acumular el bounding box de esta región (según el location propio del RG)
+                rg_location = extended_items[rg_item_index].get('location') if rg_item_index is not None else None
+                if rg_location:
+                    b = region_bounds.setdefault(rg_location, [rg_rel_x, rg_rel_y, rg_rel_x + rg_size[0], rg_rel_y + rg_size[1]])
+                    b[0] = min(b[0], rg_rel_x)
+                    b[1] = min(b[1], rg_rel_y)
+                    b[2] = max(b[2], rg_rel_x + rg_size[0])
+                    b[3] = max(b[3], rg_rel_y + rg_size[1])
+
+                # Posicionar contenido del RG (pasando la posición absoluta)
+                rg_abs_x = PADDING['left'] + rg_rel_x
+                rg_abs_y = current_y + rg_rel_y
+                _position_rg_content(
+                    rg_layout, rg_group_id, (rg_abs_x, rg_abs_y),
+                    group_info, node_positions, resource_to_parent_id, extended_items
+                )
+
+            # Si la suscripción abarca más de una región, dibujar un rectángulo discontinuo
+            # detrás de los Resource Groups de cada región (convención de draw.io para regiones)
+            if len(region_bounds) >= 2:
+                region_entries = []
+                for region_counter, (location, (min_x, min_y, max_x, max_y)) in enumerate(region_bounds.items()):
+                    region_entries.append({
+                        'id': f"{sub_group_id}_region_{region_counter}", 'parent_id': sub_group_id, 'type': 'region_container',
+                        'x': min_x - REGION_MARGIN, 'y': min_y - REGION_MARGIN,
+                        'width': (max_x - min_x) + 2 * REGION_MARGIN, 'height': (max_y - min_y) + 2 * REGION_MARGIN,
+                        'label': f"📍 {location}", 'style': CONTAINER_STYLES['region']
+                    })
+                group_info[rg_start_index:rg_start_index] = region_entries
+
+            current_y += sub_size[1] + PADDING['top'] + PADDING['bottom'] + RG_GRID_SPACING['y']
 
     print("✅ Layout de red jerárquico completado.")
     return extended_items, node_positions, group_info, resource_to_parent_id
