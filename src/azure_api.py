@@ -581,6 +581,28 @@ def find_dependencies(all_items):
         if parent_id and parent_id in all_item_ids:
             dependencies.add((source_id_lower, parent_id))
         
+        # Detección genérica de sub-recurso anidado bajo otro recurso del inventario
+        # (ej. SQL Database -> SQL Server, Event Hub -> Namespace, Blob Service ->
+        # Storage Account). Se busca el ID de OTRO item, lo más específico posible,
+        # que sea un prefijo de segmento exacto del ID de este item.
+        governance_types = {
+            'microsoft.management/managementgroups',
+            'microsoft.resources/subscriptions',
+            'microsoft.resources/subscriptions/resourcegroups',
+        }
+        if item_type_lower not in governance_types:
+            best_container_id = None
+            for candidate_id, candidate_item in item_map.items():
+                if candidate_id == source_id_lower:
+                    continue
+                if candidate_item.get('type', '').lower() in governance_types:
+                    continue
+                if source_id_lower.startswith(candidate_id + '/'):
+                    if best_container_id is None or len(candidate_id) > len(best_container_id):
+                        best_container_id = candidate_id
+            if best_container_id and best_container_id != parent_id:
+                dependencies.add((source_id_lower, best_container_id))
+        
         # Dependencias específicas basadas en la estructura del ID
         
         # Para virtualnetworklinks, extraer la relación con su privatednszones padre

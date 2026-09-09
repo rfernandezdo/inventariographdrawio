@@ -29,7 +29,7 @@ def filter_items_and_dependencies(items, dependencies, include_ids=None, exclude
     # Crear mapa de dependencias hijos -> padre para encontrar descendientes
     child_map = {}
     for src, tgt in dependencies:
-        child_map.setdefault(tgt, set()).add(src)
+        child_map.setdefault(tgt.lower(), set()).add(src.lower())
     
     def collect_descendants(start_ids):
         """
@@ -65,6 +65,20 @@ def filter_items_and_dependencies(items, dependencies, include_ids=None, exclude
         # Si no se especifican IDs a incluir, incluir todos por defecto
         selected_ids = all_ids
     
+    if include_ids:
+        # Un recurso puede quedar seleccionado por depender indirectamente de otro
+        # recurso en una Resource Group distinta (ej. hub-spoke: Private Endpoint
+        # de otra RG apuntando a la subnet del hub). Se añade también el Resource
+        # Group propio de cada recurso ya seleccionado, para que los modos
+        # 'network'/'lld' puedan dibujar su contenedor con nombre.
+        rg_ids_needed = set()
+        for item in items:
+            if item['id'].lower() in selected_ids:
+                rg, sub = item.get('resourceGroup'), item.get('subscriptionId')
+                if rg and sub:
+                    rg_ids_needed.add(f"/subscriptions/{sub}/resourcegroups/{rg}".lower())
+        selected_ids.update(rg_ids_needed & all_ids)
+    
     if exclude_ids:
         # Excluir IDs especificados y todos sus descendientes
         to_exclude = collect_descendants(exclude_ids)
@@ -77,7 +91,7 @@ def filter_items_and_dependencies(items, dependencies, include_ids=None, exclude
     # Filtrar dependencias - solo mantener las que conectan recursos incluidos
     filtered_dependencies = [
         (src, tgt) for src, tgt in dependencies 
-        if src in selected_ids and tgt in selected_ids
+        if src.lower() in selected_ids and tgt.lower() in selected_ids
     ]
     
     return filtered_items, filtered_dependencies
@@ -243,3 +257,70 @@ def filter_by_location(items, dependencies, locations=None, exclude_locations=No
     ]
     
     return filtered_items, filtered_dependencies
+
+
+_VNET_SUBNET_TYPES = {
+    "microsoft.network/virtualnetworks",
+    "microsoft.network/virtualnetworks/subnets",
+}
+
+
+def filter_flow_dependencies(dependencies, items):
+    """
+    Filtra dependencias para el modo 'flow': igual que filter_governance_dependencies
+    (sin membresia MG/Subscription/RG) y ademas sin el enlace de contencion VNet<->Subnet,
+    que no representa una relacion de integracion entre tecnologias sino jerarquia de red.
+
+    Args:
+        dependencies: Lista de dependencias (src_id, tgt_id)
+        items: Lista de recursos de Azure
+
+    Returns:
+        list: Dependencias aptas para un diagrama de flujo (izquierda -> derecha)
+    """
+    id_to_type = {item['id'].lower(): (item.get('type') or '').lower() for item in items}
+    base = filter_governance_dependencies(dependencies, items)
+
+    filtered = []
+    for src_id, tgt_id in base:
+        source_type = id_to_type.get(src_id.lower(), '')
+        target_type = id_to_type.get(tgt_id.lower(), '')
+        if source_type in _VNET_SUBNET_TYPES and target_type in _VNET_SUBNET_TYPES:
+            continue
+        filtered.append((src_id, tgt_id))
+    return filtered
+
+
+GOVERNANCE_TYPES = {
+    'microsoft.management/managementgroups',
+    'microsoft.resources/subscriptions',
+    'microsoft.resources/subscriptions/resourcegroups',
+}
+
+
+def filter_governance_dependencies(dependencies, items):
+    """
+    Filtra dependencias de pertenencia organizativa (Management Group, Subscription,
+    Resource Group), dejando solo relaciones de integracion entre tecnologias concretas.
+
+    Un diagrama de componentes debe mostrar tecnologias y sus puntos de integracion
+    (ej. cliente-servidor), no la jerarquia de gobierno de Azure; esa jerarquia ya
+    la cubre el modo 'infrastructure'.
+
+    Args:
+        dependencies: Lista de dependencias (src_id, tgt_id)
+        items: Lista de recursos de Azure
+
+    Returns:
+        list: Dependencias sin enlaces de pertenencia organizativa
+    """
+    id_to_type = {item['id'].lower(): (item.get('type') or '').lower() for item in items}
+
+    filtered = []
+    for src_id, tgt_id in dependencies:
+        source_type = id_to_type.get(src_id.lower(), '')
+        target_type = id_to_type.get(tgt_id.lower(), '')
+        if source_type in GOVERNANCE_TYPES or target_type in GOVERNANCE_TYPES:
+            continue
+        filtered.append((src_id, tgt_id))
+    return filtered
