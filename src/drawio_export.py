@@ -17,6 +17,7 @@ try:
     from drawio.layouts.infrastructure import generate_infrastructure_layout as _modular_infrastructure_layout
     from drawio.layouts.components import generate_components_layout as _modular_components_layout
     from drawio.layouts.network import generate_network_layout as _modular_network_layout
+    from drawio.layouts.flow import generate_flow_layout as _modular_flow_layout
     from drawio.icons import AZURE_ICONS as _modular_azure_icons, HIDDEN_RESOURCE_TYPES as _modular_hidden_types
     from drawio.styles import HIDDEN_RESOURCE_STYLE as _modular_hidden_style
     from drawio.multipage import generate_drawio_multipage_file as _modular_multipage_file
@@ -33,6 +34,7 @@ except ImportError:
         from .drawio.xml_builder import pretty_print_xml as _modular_pretty_print_xml
         from .drawio.layouts.components import generate_components_layout as _modular_components_layout
         from .drawio.layouts.network import generate_network_layout as _modular_network_layout
+        from .drawio.layouts.flow import generate_flow_layout as _modular_flow_layout
         from .drawio.icons import AZURE_ICONS as _modular_azure_icons, HIDDEN_RESOURCE_TYPES as _modular_hidden_types
         from .drawio.styles import HIDDEN_RESOURCE_STYLE as _modular_hidden_style
         from .drawio.multipage import generate_drawio_multipage_file as _modular_multipage_file
@@ -148,6 +150,15 @@ def generate_network_layout_wrapper(items, dependencies, levels=None, mg_id_to_i
         # Para la versión legacy, devolver items originales como primer valor
         node_positions, group_info, resource_to_parent_id = generate_network_layout(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
         return items, node_positions, group_info, resource_to_parent_id
+
+def generate_flow_layout_wrapper(items, dependencies):
+    """Wrapper que usa el módulo de layout de flujo (izquierda -> derecha)"""
+    if _MODULAR_AVAILABLE:
+        return _modular_flow_layout(items, dependencies)
+    else:
+        # Sin módulo disponible: fallback mínimo, grid simple sin capas
+        node_positions = {i: ((i % 6) * 180, (i // 6) * 130) for i in range(len(items))}
+        return node_positions, [], {}
 
 def generate_drawio_multipage_file_wrapper(items, dependencies, embed_data=True, include_ids=None, no_hierarchy_edges=False):
     """Wrapper que usa módulos refactorizados cuando están disponibles"""
@@ -353,16 +364,23 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
             ET.SubElement(group_cell, "object", 
                          attrib={'label': group['label'], 'as': 'value'})
         
-        # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network)
+        # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network,
+        # y elementos de gobierno -MG/Subscription/RG- en modo components)
         items_to_render = []
         original_to_filtered_index = {}
         
         for i, item in enumerate(extended_items):
+            resource_type_lower = (item.get('type') or '').lower()
+            
             # Filtrar Management Groups en modo network
-            if page_info['mode'] == 'network':
-                resource_type_lower = (item.get('type') or '').lower()
-                if resource_type_lower == 'microsoft.management/managementgroups':
-                    continue  # Saltear Management Groups en modo network
+            if page_info['mode'] == 'network' and resource_type_lower == 'microsoft.management/managementgroups':
+                continue  # Saltear Management Groups en modo network
+            
+            # Filtrar elementos de gobierno en modo components (no son "tecnología a implementar")
+            if page_info['mode'] == 'components':
+                from drawio.filtering import GOVERNANCE_TYPES
+                if resource_type_lower in GOVERNANCE_TYPES:
+                    continue
             
             # Mapear índice original al filtrado
             filtered_index = len(items_to_render)
@@ -376,13 +394,29 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
             style = get_node_style_wrapper(item.get('type'))
             
             # En modo network, ajustar estilo para RG, VNet y Subnet
+            is_network_container = False
             if page_info['mode'] == 'network':
                 resource_type_lower = (item.get('type') or '').lower()
                 if resource_type_lower in ['microsoft.resources/subscriptions/resourcegroups', 
                                          'microsoft.network/virtualnetworks', 
                                          'microsoft.network/virtualnetworks/subnets']:
+                    is_network_container = True
                     if 'image=' in style:
                         style = style.replace('align=center', 'align=left;labelPosition=right;verticalLabelPosition=middle;verticalAlign=middle')
+                elif 'whiteSpace=wrap' not in style:
+                    # Recursos individuales (NICs, Private Endpoints, etc.) pueden tener
+                    # nombres muy largos; sin wrap invaden a sus vecinos en el grid.
+                    if not style.endswith(';'):
+                        style += ';'
+                    style += 'whiteSpace=wrap;'
+            
+            # En modo components, permitir que la etiqueta haga wrap dentro de su columna
+            # en vez de invadir los nodos vecinos (nombres de Azure pueden ser muy largos,
+            # ej. NICs/Private Endpoints con sufijo GUID).
+            if page_info['mode'] in ('components', 'flow') and 'whiteSpace=wrap' not in style:
+                if not style.endswith(';'):
+                    style += ';'
+                style += 'whiteSpace=wrap;'
             
             parent_id = resource_to_parent_id.get(original_i, '1')
             
@@ -393,7 +427,12 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                                     vertex="1")
             
             x_pos, y_pos = node_positions.get(original_i, (filtered_i * 180, 1500))
-            width, height = ('60', '60') if parent_id != '1' else ('80', '80')
+            if page_info['mode'] in ('components', 'flow'):
+                width, height = ('160', '90')
+            elif page_info['mode'] == 'network' and not is_network_container and parent_id != '1':
+                width, height = ('150', '80')
+            else:
+                width, height = ('60', '60') if parent_id != '1' else ('80', '80')
             
             ET.SubElement(node_cell, "mxGeometry", 
                          attrib={'x': str(x_pos), 'y': str(y_pos), 
@@ -401,6 +440,8 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
             
             object_attribs = {'label': f"<b>{item.get('name', 'N/A')}</b>", 
                              'as': 'value', 'type': str(item.get('type', ''))}
+            if page_info['mode'] == 'components' and item.get('resourceGroup'):
+                object_attribs['label'] += f"<br><font style=\"font-size:9px;color:#666666\">RG: {item['resourceGroup']}</font>"
             if embed_data:
                 for key, value in item.items():
                     if key not in ['type', 'name']:
@@ -465,6 +506,10 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                             edges_to_create.append((src_id, tgt_id))
                 
                 print(f"🔗 Página {page_info['name']}: Conservando {len(edges_to_create)} enlaces de dependencias")
+            elif page_info['mode'] == 'components':
+                from drawio.filtering import filter_governance_dependencies
+                edges_to_create = filter_governance_dependencies(dependencies, items)
+                print(f"🔗 Página {page_info['name']}: {len(edges_to_create)} relaciones de integración (sin membresía MG/Subscription/RG)")
             else:
                 # Usar dependencias originales
                 edges_to_create = dependencies
@@ -534,8 +579,14 @@ def generate_drawio_multipage_file(items, dependencies, embed_data=True, include
                 else:
                     style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;"
                 
+                edge_label = ""
+                if page_info['mode'] in ('components', 'network') and source_item and target_item:
+                    from drawio.edge_labels import describe_relationship
+                    edge_label = describe_relationship(source_type, target_type)
+                
                 edge_cell = ET.SubElement(root, "mxCell", 
                                         id=f"edge-{page_info['id']}-{edge_counter}", 
+                                        value=edge_label,
                                         style=style, 
                                         parent="1", 
                                         edge="1", 
@@ -554,6 +605,15 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     # Si el modo es 'all', generar archivo multipágina
     if diagram_mode == 'all':
         return generate_drawio_multipage_file(items, dependencies, embed_data, include_ids, no_hierarchy_edges)
+
+    # El modo 'hld' agrega recursos por Resource Group (no es 1 nodo por recurso
+    # como el resto de modos), así que genera su propio XML de forma autónoma.
+    if diagram_mode == 'hld':
+        try:
+            from drawio.layouts.hld import generate_hld_diagram_xml
+        except ImportError:
+            from .drawio.layouts.hld import generate_hld_diagram_xml
+        return generate_hld_diagram_xml(items, dependencies, embed_data)
     
     # Para otros modos, usar la función original
     import sys
@@ -566,7 +626,9 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     page_names = {
         'infrastructure': 'Infrastructure',
         'network': 'Network',
-        'components': 'Components'
+        'components': 'Components',
+        'flow': 'Flow',
+        'lld': 'LLD'
     }
     page_name = page_names.get(diagram_mode, 'Azure Infrastructure')
     
@@ -591,10 +653,12 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
     tree_edges = []  # Para almacenar las conexiones del árbol
     extended_items = items  # Por defecto, usar items originales
     
-    if diagram_mode == 'network':
+    if diagram_mode in ('network', 'lld'):
         extended_items, node_positions, group_info, resource_to_parent_id = generate_network_layout_wrapper(items, dependencies)
     elif diagram_mode == 'components':
         node_positions = generate_components_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
+    elif diagram_mode == 'flow':
+        node_positions, group_info, resource_to_parent_id = generate_flow_layout_wrapper(items, dependencies)
     else: # 'infrastructure'
         node_positions, group_info, resource_to_parent_id, tree_edges = generate_infrastructure_layout_wrapper(items, dependencies, levels, mg_id_to_idx, sub_id_to_idx, rg_id_to_idx)
 
@@ -609,16 +673,23 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         ET.SubElement(group_cell, "mxGeometry", attrib={'x': str(group['x']), 'y': str(group['y']), 'width': str(group['width']), 'height': str(group['height']), 'as': 'geometry'})
         ET.SubElement(group_cell, "object", attrib={'label': group['label'], 'as': 'value'})
 
-    # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network)
+    # Preparar lista de elementos a renderizar (filtrando Management Groups en modo network,
+    # y elementos de gobierno -MG/Subscription/RG- en modo components)
     items_to_render = []
     original_to_filtered_index = {}
     
     for i, item in enumerate(extended_items):
-        # Filtrar Management Groups en modo network
-        if diagram_mode == 'network':
-            resource_type_lower = (item.get('type') or '').lower()
-            if resource_type_lower == 'microsoft.management/managementgroups':
-                continue  # Saltear Management Groups en modo network
+        resource_type_lower = (item.get('type') or '').lower()
+        
+        # Filtrar Management Groups en modo network/lld
+        if diagram_mode in ('network', 'lld') and resource_type_lower == 'microsoft.management/managementgroups':
+            continue  # Saltear Management Groups en modo network
+        
+        # Filtrar elementos de gobierno en modo components/flow (no son "tecnología a implementar")
+        if diagram_mode in ('components', 'flow'):
+            from drawio.filtering import GOVERNANCE_TYPES
+            if resource_type_lower in GOVERNANCE_TYPES:
+                continue
         
         # Mapear índice original al filtrado
         filtered_index = len(items_to_render)
@@ -631,26 +702,58 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         azure_id_to_cell_id[item['id'].lower()] = cell_id
         style = get_node_style_wrapper(item.get('type'))
         
-        # En modo network, ajustar estilo para RG, VNet y Subnet para mostrar texto a la derecha
-        if diagram_mode == 'network':
+        # En modo network/lld, ajustar estilo para RG, VNet y Subnet para mostrar texto a la derecha
+        is_network_container = False
+        if diagram_mode in ('network', 'lld'):
             resource_type_lower = (item.get('type') or '').lower()
             if resource_type_lower in ['microsoft.resources/subscriptions/resourcegroups', 
                                      'microsoft.network/virtualnetworks', 
                                      'microsoft.network/virtualnetworks/subnets']:
+                is_network_container = True
                 # Cambiar estilo para mostrar texto a la derecha del icono
                 if 'image=' in style:
                     style = style.replace('align=center', 'align=left;labelPosition=right;verticalLabelPosition=middle;verticalAlign=middle')
+            elif 'whiteSpace=wrap' not in style:
+                # Recursos individuales (NICs, Private Endpoints, etc.) pueden tener
+                # nombres muy largos; sin wrap invaden a sus vecinos en el grid.
+                if not style.endswith(';'):
+                    style += ';'
+                style += 'whiteSpace=wrap;'
+        
+        # En modo components, permitir que la etiqueta haga wrap dentro de su columna
+        # en vez de invadir los nodos vecinos (nombres de Azure pueden ser muy largos).
+        if diagram_mode in ('components', 'flow') and 'whiteSpace=wrap' not in style:
+            if not style.endswith(';'):
+                style += ';'
+            style += 'whiteSpace=wrap;'
         
         parent_id = resource_to_parent_id.get(original_i, '1')
         
         node_cell = ET.SubElement(root, "mxCell", id=cell_id, style=style, parent=parent_id, vertex="1")
         
         x_pos, y_pos = node_positions.get(original_i)
-        width, height = ('60', '60') if parent_id != '1' else ('80', '80')
+        if diagram_mode in ('components', 'flow'):
+            width, height = ('160', '90')
+        elif diagram_mode == 'lld' and not is_network_container and parent_id != '1':
+            width, height = ('150', '100')  # más alto que network: ficha técnica de 2 líneas (SKU/ubicación + tags)
+        elif diagram_mode == 'network' and not is_network_container and parent_id != '1':
+            width, height = ('150', '80')
+        else:
+            width, height = ('60', '60') if parent_id != '1' else ('80', '80')
         
         ET.SubElement(node_cell, "mxGeometry", attrib={'x': str(x_pos), 'y': str(y_pos), 'width': width, 'height': height, 'as': 'geometry'})
         
         object_attribs = {'label': f"<b>{item.get('name', 'N/A')}</b>", 'as': 'value', 'type': str(item.get('type', ''))}
+        if diagram_mode == 'components' and item.get('resourceGroup'):
+            object_attribs['label'] += f"<br><font style=\"font-size:9px;color:#666666\">RG: {item['resourceGroup']}</font>"
+        if diagram_mode == 'lld' and not is_network_container:
+            from drawio.resource_spec import describe_resource_spec, describe_resource_tags
+            spec = describe_resource_spec(item)
+            if spec:
+                object_attribs['label'] += f"<br><font style=\"font-size:9px;color:#666666\">{spec}</font>"
+            tags = describe_resource_tags(item)
+            if tags:
+                object_attribs['label'] += f"<br><font style=\"font-size:8px;color:#8a8a8a\">🏷 {tags}</font>"
         if embed_data:
             for key, value in item.items():
                 if key not in ['type', 'name']:
@@ -668,7 +771,7 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
         for src_id, tgt_id in dependencies:
             if (src_id, tgt_id) not in hierarchical_pairs and (tgt_id, src_id) not in hierarchical_pairs:
                 edges_to_create.append((src_id, tgt_id))
-    elif diagram_mode == 'network' and no_hierarchy_edges:
+    elif diagram_mode in ('network', 'lld') and no_hierarchy_edges:
         print(f"🔗 Filtrando enlaces jerárquicos de {len(dependencies)} dependencias")
         
         # Crear diccionario de mapeo ID → tipo
@@ -709,6 +812,14 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
                     edges_to_create.append((src_id, tgt_id))
         
         print(f"🔗 Conservando {len(edges_to_create)} enlaces de dependencias")
+    elif diagram_mode == 'components':
+        from drawio.filtering import filter_governance_dependencies
+        edges_to_create = filter_governance_dependencies(dependencies, items)
+        print(f"🔗 {len(edges_to_create)} relaciones de integración (sin membresía MG/Subscription/RG)")
+    elif diagram_mode == 'flow':
+        from drawio.filtering import filter_flow_dependencies
+        edges_to_create = filter_flow_dependencies(dependencies, items)
+        print(f"🔗 {len(edges_to_create)} relaciones de integración en el flujo")
     else:
         edges_to_create = dependencies
     
@@ -757,11 +868,36 @@ def generate_drawio_file(items, dependencies, embed_data=True, include_ids=None,
                 style = "edgeStyle=straight;rounded=0;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
             elif is_hierarchical:
                 style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1976d2;strokeWidth=2;"
+            elif diagram_mode == 'flow':
+                style = ("edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;"
+                         "endArrow=classic;strokeColor=#1976d2;strokeWidth=2;dashed=0;"
+                         "exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;")
             else:
                 style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#757575;strokeWidth=1;dashed=1;"
             
+            edge_label = ""
+            if diagram_mode in ('network', 'flow', 'lld') and source_item and target_item:
+                # Las relaciones de mera contención (RG->recurso, cualquier cosa ubicada
+                # dentro de una Subnet/VNet) ya se comunican visualmente por el anidado
+                # de contenedores; etiquetarlas además con texto ("Subnet"/"VNet") solo
+                # produce texto solapado sobre la propia etiqueta del contenedor. Solo se
+                # etiquetan relaciones que aportan información no obvia (ej. Private Link,
+                # Peering entre VNets).
+                subnet_type = 'microsoft.network/virtualnetworks/subnets'
+                vnet_type = 'microsoft.network/virtualnetworks'
+                is_pure_containment = (
+                    source_type == 'microsoft.resources/subscriptions/resourcegroups' or
+                    target_type == 'microsoft.resources/subscriptions/resourcegroups' or
+                    target_type == subnet_type or
+                    (target_type == vnet_type and source_type != vnet_type)
+                )
+                if not is_pure_containment:
+                    from drawio.edge_labels import describe_relationship
+                    edge_label = describe_relationship(source_type, target_type)
+            
             edge_cell = ET.SubElement(root, "mxCell", 
                                     id=f"edge-{edge_counter}", 
+                                    value=edge_label,
                                     style=style, 
                                     parent="1", 
                                     edge="1", 
@@ -782,7 +918,7 @@ def filter_items_and_dependencies(items, dependencies, include_ids=None, exclude
     exclude_ids = set(i.lower() for i in exclude_ids) if exclude_ids else set()
     child_map = {}
     for src, tgt in dependencies:
-        child_map.setdefault(tgt, set()).add(src)
+        child_map.setdefault(tgt.lower(), set()).add(src.lower())
     def collect_descendants(start_ids):
         result = set()
         stack = list(start_ids)
@@ -799,10 +935,25 @@ def filter_items_and_dependencies(items, dependencies, include_ids=None, exclude
         selected_ids.update(include_ids)
     else:
         selected_ids = all_ids
+    if include_ids:
+        # Un recurso puede quedar seleccionado por depender (indirectamente) de otro
+        # recurso en una Resource Group distinta a la de origen (ej. arquitectura
+        # hub-spoke: un Private Endpoint de otra RG apunta a la subnet del hub). En
+        # ese caso, el propio objeto "Resource Group" de esa RG vecina no tiene por
+        # qué estar entre los descendientes recolectados, aunque sí queramos poder
+        # dibujar su contenedor con nombre en los modos 'network'/'lld'. Se añade
+        # aquí explícitamente el Resource Group de cada recurso ya seleccionado.
+        rg_ids_needed = set()
+        for item in items:
+            if item['id'].lower() in selected_ids:
+                rg, sub = item.get('resourceGroup'), item.get('subscriptionId')
+                if rg and sub:
+                    rg_ids_needed.add(f"/subscriptions/{sub}/resourcegroups/{rg}".lower())
+        selected_ids.update(rg_ids_needed & all_ids)
     if exclude_ids:
         to_exclude = collect_descendants(exclude_ids)
         to_exclude.update(exclude_ids)
         selected_ids = selected_ids - to_exclude
     filtered_items = [item for item in items if item['id'].lower() in selected_ids]
-    filtered_dependencies = [(src, tgt) for src, tgt in dependencies if src in selected_ids and tgt in selected_ids]
+    filtered_dependencies = [(src, tgt) for src, tgt in dependencies if src.lower() in selected_ids and tgt.lower() in selected_ids]
     return filtered_items, filtered_dependencies
