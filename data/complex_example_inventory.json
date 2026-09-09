@@ -1,0 +1,1148 @@
+{
+  "metadata": {
+    "exported_at": "2026-09-09T15:59:53.155056+00:00",
+    "source": "generate_complex_example_inventory.py",
+    "total_items": 68,
+    "total_dependencies": 90
+  },
+  "items": [
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/mg-contoso-root",
+      "type": "microsoft.management/managementgroups",
+      "name": "mg-contoso-root",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "properties": {}
+    },
+    {
+      "id": "/providers/Microsoft.Management/managementGroups/mg-contoso-landingzones",
+      "type": "microsoft.management/managementgroups",
+      "name": "mg-contoso-landingzones",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "properties": {
+        "details": {
+          "managementGroupAncestorsChain": [
+            {
+              "id": "/providers/Microsoft.Management/managementGroups/mg-contoso-root"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111",
+      "type": "microsoft.resources/subscriptions",
+      "name": "sub-prod-eu",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "properties": {
+        "managementGroupAncestorsChain": [
+          {
+            "id": "/providers/Microsoft.Management/managementGroups/mg-contoso-landingzones"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222",
+      "type": "microsoft.resources/subscriptions",
+      "name": "sub-shared-eu",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "properties": {
+        "managementGroupAncestorsChain": [
+          {
+            "id": "/providers/Microsoft.Management/managementGroups/mg-contoso-landingzones"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-network-hub-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-network-spoke-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-compute-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-data-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-ai-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "northeurope",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-security-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-management-shared-we",
+      "type": "microsoft.resources/subscriptions/resourcegroups",
+      "name": "rg-management-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "northeurope",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we",
+      "type": "microsoft.network/virtualnetworks",
+      "name": "vnet-hub-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we/subnets/snet-gateway-we",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-gateway-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "addressPrefix": "10.0.0.0/24"
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we/subnets/snet-shared-we",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24"
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/publicIPAddresses/pip-gateway-we",
+      "type": "microsoft.network/publicipaddresses",
+      "name": "pip-gateway-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworkGateways/vgw-hub-we",
+      "type": "microsoft.network/virtualnetworkgateways",
+      "name": "vgw-hub-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we/subnets/snet-gateway-we"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/azureFirewalls/azfw-hub-we",
+      "type": "microsoft.network/azurefirewalls",
+      "name": "azfw-hub-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net",
+      "type": "microsoft.network/privatednszones",
+      "name": "privatelink.blob.core.windows.net",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net/virtualNetworkLinks/link-to-hub",
+      "type": "microsoft.network/privatednszones/virtualnetworklinks",
+      "name": "link-to-hub",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "virtualNetwork": {
+          "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we",
+      "type": "microsoft.network/virtualnetworks",
+      "name": "vnet-spoke-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.1.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-app-we",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-app-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "addressPrefix": "10.1.0.0/24"
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-data-we",
+      "type": "microsoft.network/virtualnetworks/subnets",
+      "name": "snet-data-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "addressPrefix": "10.1.1.0/24"
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/networkSecurityGroups/nsg-shared-we",
+      "type": "microsoft.network/networksecuritygroups",
+      "name": "nsg-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "subnets": [
+          {
+            "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/virtualNetworks/vnet-hub-we/subnets/snet-shared-we"
+          },
+          {
+            "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-app-we"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-network-hub-we/providers/Microsoft.Network/routeTables/rt-shared-we",
+      "type": "microsoft.network/routetables",
+      "name": "rt-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-hub-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "subnets": [
+          {
+            "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-app-we"
+          },
+          {
+            "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-data-we"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/networkInterfaces/nic-vm-web-we",
+      "type": "microsoft.network/networkinterfaces",
+      "name": "nic-vm-web-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-app-we"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/loadBalancers/lb-internal-we",
+      "type": "microsoft.network/loadbalancers",
+      "name": "lb-internal-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/natGateways/natgw-spoke-we",
+      "type": "microsoft.network/natgateways",
+      "name": "natgw-spoke-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/frontdoors/fd-public-we",
+      "type": "microsoft.network/frontdoors",
+      "name": "fd-public-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "global",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "backendPools": [
+          {
+            "backends": [
+              {
+                "privateLinkResourceId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Web/sites/app-web-prod-we"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/applicationSecurityGroups/asg-app-we",
+      "type": "microsoft.network/applicationsecuritygroups",
+      "name": "asg-app-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Compute/disks/vm-web-prod-we-osdisk",
+      "type": "microsoft.compute/disks",
+      "name": "vm-web-prod-we-osdisk",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Compute/virtualMachines/vm-web-prod-we",
+      "type": "microsoft.compute/virtualmachines",
+      "name": "vm-web-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/networkInterfaces/nic-vm-web-we"
+            }
+          ]
+        },
+        "storageProfile": {
+          "osDisk": {
+            "managedDisk": {
+              "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Compute/disks/vm-web-prod-we-osdisk"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-app-prod-we",
+      "type": "microsoft.compute/virtualmachinescalesets",
+      "name": "vmss-app-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.ContainerService/managedClusters/aks-prod-we",
+      "type": "microsoft.containerservice/managedclusters",
+      "name": "aks-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Batch/batchAccounts/batchprodwe",
+      "type": "microsoft.batch/batchaccounts",
+      "name": "batchprodwe",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.App/managedEnvironments/cae-prod-we",
+      "type": "microsoft.app/managedenvironments",
+      "name": "cae-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.App/containerApps/ca-api-prod-we",
+      "type": "microsoft.app/containerapps",
+      "name": "ca-api-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "environmentId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.App/managedEnvironments/cae-prod-we"
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Web/serverfarms/asp-web-prod-we",
+      "type": "microsoft.web/serverfarms",
+      "name": "asp-web-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Web/sites/app-web-prod-we",
+      "type": "microsoft.web/sites",
+      "name": "app-web-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "serverFarmId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.Web/serverfarms/asp-web-prod-we"
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-compute-prod-we/providers/Microsoft.AppPlatform/Spring/spring-prod-we",
+      "type": "microsoft.appplatform/spring",
+      "name": "spring-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-compute-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Storage/storageAccounts/stprodwe001",
+      "type": "microsoft.storage/storageaccounts",
+      "name": "stprodwe001",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Storage/storageAccounts/stprodwe001/blobServices/default",
+      "type": "microsoft.storage/storageaccounts/blobservices",
+      "name": "default",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/privateEndpoints/pe-storage-we",
+      "type": "microsoft.network/privateendpoints",
+      "name": "pe-storage-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-network-spoke-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "subnet": {
+          "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-network-spoke-we/providers/Microsoft.Network/virtualNetworks/vnet-spoke-we/subnets/snet-data-we"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "properties": {
+              "privateLinkServiceId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Storage/storageAccounts/stprodwe001"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-prod-we",
+      "type": "microsoft.documentdb/databaseaccounts",
+      "name": "cosmos-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Sql/servers/sql-prod-we",
+      "type": "microsoft.sql/servers",
+      "name": "sql-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Sql/servers/sql-prod-we/databases/sqldb-app-prod-we",
+      "type": "microsoft.sql/servers/databases",
+      "name": "sqldb-app-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.DBforPostgreSQL/flexibleServers/psql-prod-we",
+      "type": "microsoft.dbforpostgresql/flexibleservers",
+      "name": "psql-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Cache/redis/redis-prod-we",
+      "type": "microsoft.cache/redis",
+      "name": "redis-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Synapse/workspaces/synapse-prod-we",
+      "type": "microsoft.synapse/workspaces",
+      "name": "synapse-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.DataFactory/factories/adf-prod-we",
+      "type": "microsoft.datafactory/factories",
+      "name": "adf-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Databricks/workspaces/databricks-prod-we",
+      "type": "microsoft.databricks/workspaces",
+      "name": "databricks-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.EventHub/namespaces/eh-ns-prod-we",
+      "type": "microsoft.eventhub/namespaces",
+      "name": "eh-ns-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.EventHub/namespaces/eh-ns-prod-we/eventhubs/eh-telemetry-prod-we",
+      "type": "microsoft.eventhub/namespaces/eventhubs",
+      "name": "eh-telemetry-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Purview/accounts/purview-prod-we",
+      "type": "microsoft.purview/accounts",
+      "name": "purview-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-data-prod-we/providers/Microsoft.Kusto/clusters/kusto-prod-we",
+      "type": "microsoft.kusto/clusters",
+      "name": "kusto-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-data-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.CognitiveServices/accounts/cog-prod-we",
+      "type": "microsoft.cognitiveservices/accounts",
+      "name": "cog-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.MachineLearningServices/workspaces/mlw-prod-we",
+      "type": "microsoft.machinelearningservices/workspaces",
+      "name": "mlw-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.Devices/IotHubs/iothub-prod-we",
+      "type": "microsoft.devices/iothubs",
+      "name": "iothub-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.DigitalTwins/digitalTwinsInstances/dt-prod-we",
+      "type": "microsoft.digitaltwins/digitaltwinsinstances",
+      "name": "dt-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.Maps/accounts/maps-prod-we",
+      "type": "microsoft.maps/accounts",
+      "name": "maps-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-prod-we/providers/Microsoft.BotService/botServices/bot-prod-we",
+      "type": "microsoft.botservice/botservices",
+      "name": "bot-prod-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "global",
+      "resourceGroup": "rg-ai-prod-we",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.KeyVault/vaults/kv-shared-we",
+      "type": "microsoft.keyvault/vaults",
+      "name": "kv-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-security-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.OperationalInsights/workspaces/law-shared-we",
+      "type": "microsoft.operationalinsights/workspaces",
+      "name": "law-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-security-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.Insights/components/appi-shared-we",
+      "type": "microsoft.insights/components",
+      "name": "appi-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-security-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {
+        "WorkspaceResourceId": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.OperationalInsights/workspaces/law-shared-we"
+      }
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.RecoveryServices/vaults/rsv-shared-we",
+      "type": "microsoft.recoveryservices/vaults",
+      "name": "rsv-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-security-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/providers/Microsoft.Security/pricings/VirtualMachines",
+      "type": "microsoft.security/pricings",
+      "name": "VirtualMachines",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-security-shared-we/providers/Microsoft.OperationalInsights/workspaces/law-shared-we/providers/Microsoft.SecurityInsights/solutions/sentinel-shared-we",
+      "type": "microsoft.securityinsights/solutions",
+      "name": "sentinel-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "resourceGroup": "rg-security-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-management-shared-we/providers/Microsoft.Automation/automationAccounts/aa-shared-we",
+      "type": "microsoft.automation/automationaccounts",
+      "name": "aa-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-management-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    },
+    {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-management-shared-we/providers/Microsoft.Media/mediaservices/media-shared-we",
+      "type": "microsoft.media/mediaservices",
+      "name": "media-shared-we",
+      "tenantId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "location": "westeurope",
+      "resourceGroup": "rg-management-shared-we",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "properties": {}
+    }
+  ],
+  "dependencies": [
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.kusto/clusters/kusto-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.web/sites/app-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/natgateways/natgw-spoke-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.eventhub/namespaces/eh-ns-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.operationalinsights/workspaces/law-shared-we/providers/microsoft.securityinsights/solutions/sentinel-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/routetables/rt-shared-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-data-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/networkinterfaces/nic-vm-web-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-app-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.insights/components/appi-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.operationalinsights/workspaces/law-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.web/serverfarms/asp-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/privateendpoints/pe-storage-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.storage/storageaccounts/stprodwe001"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.eventhub/namespaces/eh-ns-prod-we/eventhubs/eh-telemetry-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/privateendpoints/pe-storage-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-data-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.maps/accounts/maps-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.cache/redis/redis-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.app/containerapps/ca-api-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.app/managedenvironments/cae-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111",
+      "/providers/microsoft.management/managementgroups/mg-contoso-landingzones"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/virtualmachinescalesets/vmss-app-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.digitaltwins/digitaltwinsinstances/dt-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-gateway-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.insights/components/appi-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.botservice/botservices/bot-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.web/sites/app-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.web/serverfarms/asp-web-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net/virtualnetworklinks/link-to-hub",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-data-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-management-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/networksecuritygroups/nsg-shared-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-app-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.containerservice/managedclusters/aks-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.dbforpostgresql/flexibleservers/psql-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/azurefirewalls/azfw-hub-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-management-shared-we/providers/microsoft.media/mediaservices/media-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-management-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.purview/accounts/purview-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/virtualmachines/vm-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.app/containerapps/ca-api-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.eventhub/namespaces/eh-ns-prod-we/eventhubs/eh-telemetry-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.eventhub/namespaces/eh-ns-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-data-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.storage/storageaccounts/stprodwe001/blobservices/default",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.storage/storageaccounts/stprodwe001"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.datafactory/factories/adf-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.sql/servers/sql-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-gateway-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/routetables/rt-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/publicipaddresses/pip-gateway-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.sql/servers/sql-prod-we/databases/sqldb-app-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.operationalinsights/workspaces/law-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.machinelearningservices/workspaces/mlw-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net/virtualnetworklinks/link-to-hub",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.databricks/workspaces/databricks-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.cognitiveservices/accounts/cog-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/frontdoors/fd-public-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222",
+      "/providers/microsoft.management/managementgroups/mg-contoso-landingzones"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/virtualmachines/vm-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/disks/vm-web-prod-we-osdisk"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.app/managedenvironments/cae-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/frontdoors/fd-public-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.web/sites/app-web-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworkgateways/vgw-hub-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-gateway-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/networkinterfaces/nic-vm-web-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-management-shared-we/providers/microsoft.automation/automationaccounts/aa-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-management-shared-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-app-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/loadbalancers/lb-internal-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we/providers/microsoft.devices/iothubs/iothub-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-ai-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.synapse/workspaces/synapse-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.storage/storageaccounts/stprodwe001/blobservices/default",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.keyvault/vaults/kv-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.recoveryservices/vaults/rsv-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.documentdb/databaseaccounts/cosmos-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworkgateways/vgw-hub-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.appplatform/spring/spring-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/privateendpoints/pe-storage-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/disks/vm-web-prod-we-osdisk",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-app-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/networksecuritygroups/nsg-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/virtualnetworks/vnet-hub-we/subnets/snet-shared-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.storage/storageaccounts/stprodwe001",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.compute/virtualmachines/vm-web-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/networkinterfaces/nic-vm-web-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we/providers/microsoft.batch/batchaccounts/batchprodwe",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-compute-prod-we"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.sql/servers/sql-prod-we/databases/sqldb-app-prod-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-data-prod-we/providers/microsoft.sql/servers/sql-prod-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/networksecuritygroups/nsg-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/routetables/rt-shared-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/virtualnetworks/vnet-spoke-we/subnets/snet-app-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.operationalinsights/workspaces/law-shared-we/providers/microsoft.securityinsights/solutions/sentinel-shared-we",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-security-shared-we/providers/microsoft.operationalinsights/workspaces/law-shared-we"
+    ],
+    [
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net/virtualnetworklinks/link-to-hub",
+      "/subscriptions/22222222-2222-2222-2222-222222222222/resourcegroups/rg-network-hub-we/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net"
+    ],
+    [
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we/providers/microsoft.network/applicationsecuritygroups/asg-app-we",
+      "/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/rg-network-spoke-we"
+    ],
+    [
+      "/providers/microsoft.management/managementgroups/mg-contoso-landingzones",
+      "/providers/microsoft.management/managementgroups/mg-contoso-root"
+    ]
+  ]
+}
